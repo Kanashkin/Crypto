@@ -76,14 +76,14 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 0;color:var(--mut);font-size:14px}
 .hidden{display:none!important}
-.disclaimer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.disclaimer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;pointer-events:all}
 .disclaimer-box{background:#0f1318;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px 24px;max-width:400px;width:100%;text-align:center}
 .disclaimer-logo{font-size:20px;font-weight:700;margin-bottom:24px;color:#e8edf5}.disclaimer-logo span{color:#00e676}
 .disclaimer-icon{font-size:40px;margin-bottom:16px}
 .disclaimer-title{font-size:18px;font-weight:700;color:#e8edf5;margin-bottom:12px}
 .disclaimer-text{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:24px}
 .disclaimer-text b{color:rgba(255,255,255,.8)}
-.disclaimer-btn{width:100%;background:#fff;color:#000;border:none;font-size:15px;font-weight:700;padding:16px;border-radius:14px;cursor:pointer;margin-bottom:10px}
+.disclaimer-btn{width:100%;background:#fff;color:#000;border:none;font-size:15px;font-weight:700;padding:16px;border-radius:14px;cursor:pointer;margin-bottom:10px;position:relative;z-index:10000}
 .disclaimer-lang{display:flex;gap:8px;justify-content:center}
 .disclaimer-lang button{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer}
 .disclaimer-lang button.on{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)}
@@ -572,10 +572,9 @@ function renderSignal(sig) {
     if (hasOpen) {
       tbEl.innerHTML = '<button onclick="closeTrade()" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--txt);font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;margin-top:12px">'+(lang==='ru'?'⏹ Закрыть сделку':'⏹ Close trade')+'</button>';
     } else {
-      tbEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'
-        + '<button onclick="openTrade('long')" style="background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3);color:#00e676;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer">↑ '+(lang==='ru'?'Лонг':'Long')+'</button>'
-        + '<button onclick="openTrade('short')" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:#ff4d6d;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer">↓ '+(lang==='ru'?'Шорт':'Short')+'</button>'
-        + '</div>';
+      var longBtn = '<button onclick="openTrade(\'long\')" style="background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3);color:#00e676;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;width:100%">↑ '+(lang==='ru'?'Лонг':'Long')+'</button>';
+      var shortBtn = '<button onclick="openTrade(\'short\')" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:#ff4d6d;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;width:100%">↓ '+(lang==='ru'?'Шорт':'Short')+'</button>';
+      tbEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'+longBtn+shortBtn+'</div>';
     }
   }
 
