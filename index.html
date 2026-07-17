@@ -603,8 +603,8 @@ function loadData() {
   if (contEl) contEl.classList.add('hidden');
   if (rbtnEl) rbtnEl.disabled = true;
 
-  Promise.all([fetchKlines(), fetchPrice(), fetch24h(), fetchFG()]).then(function(res) {
-    var candles = res[0], price = res[1], change = res[2], fg = res[3];
+  Promise.all([fetchKlines(), fetchPrice(), fetch24h()]).then(function(res) {
+    var candles = res[0], price = res[1], change = res[2];
     var sig = genSignal(candles);
 
     if (lastDir && lastDir !== sig.direction && sig.direction !== 'neutral') {
@@ -615,12 +615,13 @@ function loadData() {
     }
     lastDir = sig.direction;
 
-    renderFG(fg);
     renderPrice(price, change);
     renderSignal(sig);
 
     if (loadEl) loadEl.classList.add('hidden');
     if (contEl) contEl.classList.remove('hidden');
+
+    fetchFG().then(function(fg) { renderFG(fg); }).catch(function() {});
   }).catch(function(err) {
     if (loadEl) loadEl.innerHTML = '<div style="color:#ff4d6d;text-align:center;padding:40px">Ошибка загрузки.<br><small>' + err.message + '</small></div>';
   }).then(function() {
