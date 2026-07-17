@@ -570,7 +570,18 @@ function renderSignal(sig) {
   if (tbEl) {
     var hasOpen = trades.some(function(tr) { return tr.status === 'pending' && tr.sym === sym; });
     if (hasOpen) {
-      tbEl.innerHTML = '<button onclick="closeTrade()" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--txt);font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;margin-top:12px">'+(lang==='ru'?'⏹ Закрыть сделку':'⏹ Close trade')+'</button>';
+      var openTr = null;
+      var curKey = sym + '_' + iv;
+      for (var oi = 0; oi < trades.length; oi++) { if (trades[oi].status==='pending' && trades[oi].key===curKey) { openTr = trades[oi]; break; } }
+      var infoHtml = '';
+      if (openTr && openTr.tp1) {
+        infoHtml = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;font-size:11px;text-align:center">'
+          + '<div style="background:rgba(0,230,118,.1);border-radius:8px;padding:6px"><div style="color:var(--mut)">TP1</div><div style="color:#00e676;font-weight:700">'+fmtP(openTr.tp1)+'</div></div>'
+          + '<div style="background:rgba(0,230,118,.1);border-radius:8px;padding:6px"><div style="color:var(--mut)">TP2</div><div style="color:#00e676;font-weight:700">'+fmtP(openTr.tp2)+'</div></div>'
+          + '<div style="background:rgba(255,77,109,.1);border-radius:8px;padding:6px"><div style="color:var(--mut)">SL</div><div style="color:#ff4d6d;font-weight:700">'+fmtP(openTr.sl)+'</div></div>'
+          + '</div>';
+      }
+      tbEl.innerHTML = infoHtml + '<button onclick="closeTrade()" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--txt);font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;margin-top:10px">'+(lang==='ru'?'⏹ Закрыть вручную':'⏹ Close manually')+'</button>';
     } else {
       var longBtn = '<button onclick="openTrade(\'long\')" style="background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3);color:#00e676;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;width:100%">↑ '+(lang==='ru'?'Лонг':'Long')+'</button>';
       var shortBtn = '<button onclick="openTrade(\'short\')" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:#ff4d6d;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;width:100%">↓ '+(lang==='ru'?'Шорт':'Short')+'</button>';
@@ -818,15 +829,33 @@ function checkPendingTrades(currentPrice, sym) {
   var updated = false;
   for (var i = 0; i < trades.length; i++) {
     var tr = trades[i];
-    if (tr.status === 'pending' && tr.sym === sym) {
-      var age = Date.now() - tr.ts;
-      if (age > 4 * 60 * 60 * 1000) {
-        resolveTrade(tr, currentPrice);
-        updated = true;
-      }
+    var trKey = sym + '_' + iv;
+    if (tr.status !== 'pending' || tr.key !== trKey) continue;
+    if (!tr.tp1 || !tr.sl) continue;
+
+    var hit = null;
+    if (tr.direction === 'long') {
+      if (currentPrice >= tr.tp2) hit = { price: tr.tp2, reason: 'TP2' };
+      else if (currentPrice >= tr.tp1) hit = { price: tr.tp1, reason: 'TP1' };
+      else if (currentPrice <= tr.sl) hit = { price: tr.sl, reason: 'SL' };
+    } else {
+      if (currentPrice <= tr.tp2) hit = { price: tr.tp2, reason: 'TP2' };
+      else if (currentPrice <= tr.tp1) hit = { price: tr.tp1, reason: 'TP1' };
+      else if (currentPrice >= tr.sl) hit = { price: tr.sl, reason: 'SL' };
+    }
+
+    if (hit) {
+      tr.exit = hit.price;
+      tr.exitReason = hit.reason;
+      var pct = tr.direction === 'long'
+        ? (hit.price - tr.entry) / tr.entry * 100
+        : (tr.entry - hit.price) / tr.entry * 100;
+      tr.pnl = pct;
+      tr.status = pct >= 0 ? 'win' : 'loss';
+      updated = true;
     }
   }
-  if (updated) renderStats();
+  if (updated) { saveTrades(); renderStats(); if (lastSig) renderSignal(lastSig); }
 }
 
 function calcStats() {
@@ -889,17 +918,27 @@ function renderStats() {
 
 function openTrade(direction) {
   if (!currentPrice || currentPrice === 0) { alert(lang==='ru'?'Цена ещё не загружена':'Price not loaded yet'); return; }
-  var hasOpen = trades.some(function(tr) { return tr.status === 'pending' && tr.sym === sym; });
-  if (hasOpen) { alert(lang==='ru'?'У тебя уже есть открытая сделка по '+sym:'You already have an open trade on '+sym); return; }
-  addTrade(sym, direction, currentPrice, 0);
+  var tradeKey = sym + '_' + iv;
+  var hasOpen = trades.some(function(tr) { return tr.status === 'pending' && tr.key === tradeKey; });
+  if (hasOpen) { alert(lang==='ru'?'Уже открыта сделка по '+sym+' '+iv:'Already have open trade on '+sym+' '+iv); return; }
+  var tp1 = null, tp2 = null, sl = null;
+  if (lastSig && lastSig.levels) {
+    tp1 = lastSig.levels.tp1;
+    tp2 = lastSig.levels.tp2;
+    sl = lastSig.levels.sl;
+  }
+  trades.unshift({ id: Date.now(), sym: sym, iv: iv, key: tradeKey, direction: direction, entry: currentPrice, conf: lastSig ? lastSig.confidence : 0, tp1: tp1, tp2: tp2, sl: sl, exit: null, pnl: null, ts: Date.now(), status: 'pending' });
+  if (trades.length > 100) trades = trades.slice(0, 100);
+  saveTrades();
   renderStats();
   renderSignal(lastSig);
 }
 
 function closeTrade() {
   if (!currentPrice || currentPrice === 0) return;
+  var tradeKey = sym + '_' + iv;
   for (var i = 0; i < trades.length; i++) {
-    if (trades[i].status === 'pending' && trades[i].sym === sym) {
+    if (trades[i].status === 'pending' && trades[i].key === tradeKey) {
       resolveTrade(trades[i], currentPrice);
       break;
     }
