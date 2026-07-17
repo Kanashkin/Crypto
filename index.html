@@ -1,545 +1,317 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CryptoSignal — Live Trading Signals</title>
+<title>CryptoSignal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-
-  :root {
-    --bg: #080b10;
-    --surface: #0f1318;
-    --surface2: #161c24;
-    --border: rgba(255,255,255,0.07);
-    --text: #e8edf5;
-    --muted: #5a6478;
-    --green: #00e676;
-    --red: #ff4d6d;
-    --yellow: #ffd740;
-    --blue: #448aff;
-    --font: 'Space Grotesk', sans-serif;
-    --mono: 'Space Mono', monospace;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* HEADER */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 24px;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: rgba(8,11,16,0.92);
-    backdrop-filter: blur(12px);
-    z-index: 100;
-  }
-  .logo { font-weight: 700; font-size: 17px; letter-spacing: -0.3px; }
-  .logo span { color: var(--green); }
-
-  .lang-switch {
-    display: flex;
-    gap: 4px;
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 3px;
-  }
-  .lang-switch button {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 5px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .lang-switch button.active {
-    background: var(--surface2);
-    color: var(--text);
-  }
-
-  /* LAYOUT */
-  main {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 20px 16px 60px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  /* SELECTORS */
-  .selectors {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .symbol-select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 700;
-    padding: 10px 14px;
-    border-radius: 12px;
-    cursor: pointer;
-    outline: none;
-  }
-  .interval-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .interval-btn.active {
-    background: #fff;
-    color: #000;
-    border-color: #fff;
-  }
-
-  /* CARDS */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px;
-  }
-
-  /* FEAR & GREED */
-  .fg-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .fg-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .fg-value { font-size: 17px; font-weight: 700; }
-  .fg-ring { position: relative; width: 56px; height: 56px; }
-  .fg-ring svg { transform: rotate(-90deg); }
-  .fg-ring-num {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--mono);
-    font-size: 14px; font-weight: 700;
-  }
-
-  /* PRICE */
-  .price-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .price-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .price-value { font-family: var(--mono); font-size: 30px; font-weight: 700; letter-spacing: -1px; }
-  .price-change {
-    font-size: 15px; font-weight: 700;
-    padding: 8px 14px; border-radius: 10px;
-    font-family: var(--mono);
-  }
-  .price-change.pos { color: var(--green); background: rgba(0,230,118,0.12); }
-  .price-change.neg { color: var(--red); background: rgba(255,77,109,0.12); }
-
-  /* SIGNAL */
-  .signal-card {
-    text-align: center;
-    padding: 32px 24px 24px;
-    border-radius: 20px;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    transition: border-color 0.3s, background 0.3s;
-  }
-  .signal-card.long  { border-color: rgba(0,230,118,0.4); background: rgba(0,230,118,0.06); }
-  .signal-card.short { border-color: rgba(255,77,109,0.4); background: rgba(255,77,109,0.06); }
-  .signal-card.neutral { border-color: rgba(255,215,64,0.3); background: rgba(255,215,64,0.05); }
-
-  .signal-direction {
-    font-size: 52px; font-weight: 800;
-    letter-spacing: -2px;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .signal-card.long  .signal-direction { color: var(--green); }
-  .signal-card.short .signal-direction { color: var(--red); }
-  .signal-card.neutral .signal-direction { color: var(--yellow); }
-
-  .signal-sub { font-size: 17px; color: rgba(255,255,255,0.65); margin-bottom: 10px; }
-  .signal-explanation { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
-  .signal-disclaimer { font-size: 10px; color: rgba(255,255,255,0.2); }
-
-  /* CONFIDENCE */
-  .conf-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-  .conf-label { font-size: 13px; color: var(--muted); }
-  .conf-value { font-size: 13px; font-weight: 700; }
-  .conf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 6px; height: 8px; overflow: hidden; }
-  .conf-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
-
-  /* REASONS */
-  .section-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
-  .reason-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-  .reason-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
-  .reason-dot.bull { background: var(--green); }
-  .reason-dot.bear { background: var(--red); }
-  .reason-text { font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.5; }
-
-  /* LEVELS */
-  .level-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
-  .level-row:last-child { border-bottom: none; }
-  .level-name { font-size: 13px; color: var(--muted); }
-  .level-val { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .level-atr-note { font-size: 10px; color: var(--muted); margin-top: 10px; }
-
-  /* INDICATORS */
-  .ind-row { margin-bottom: 2px; }
-  .ind-main { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
-  .ind-name-wrap { display: flex; align-items: center; gap: 6px; }
-  .ind-name { font-size: 13px; color: var(--muted); }
-  .ind-info-icon { font-size: 11px; color: rgba(255,255,255,0.2); }
-  .ind-val { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .ind-val.bull { color: var(--green); }
-  .ind-val.bear { color: var(--red); }
-  .ind-desc { font-size: 12px; color: rgba(255,255,255,0.4); padding: 6px 0 8px; display: none; line-height: 1.5; }
-  .ind-desc.open { display: block; }
-
-  /* REFRESH */
-  .refresh-btn {
-    width: 100%;
-    background: #fff;
-    color: #000;
-    border: none;
-    font-family: var(--font);
-    font-size: 15px;
-    font-weight: 700;
-    padding: 16px;
-    border-radius: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: opacity 0.2s;
-  }
-  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .refresh-btn svg { width: 16px; height: 16px; }
-
-  /* TABS */
-  .tabs {
-    display: flex;
-    gap: 6px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 4px;
-  }
-  .tab-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .tab-btn.active { background: #fff; color: #000; }
-
-  /* HISTORY */
-  .history-empty { text-align: center; padding: 60px 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
-  .history-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    margin-bottom: 10px;
-  }
-  .history-icon {
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 800; flex-shrink: 0;
-  }
-  .history-icon.long  { background: rgba(0,230,118,0.15); color: var(--green); }
-  .history-icon.short { background: rgba(255,77,109,0.15); color: var(--red); }
-  .history-meta { flex: 1; }
-  .history-top { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
-  .history-sym { font-size: 14px; font-weight: 700; }
-  .history-dir {
-    font-size: 11px; font-weight: 700;
-    padding: 2px 8px; border-radius: 6px;
-  }
-  .history-dir.long  { background: rgba(0,230,118,0.15); color: var(--green); }
-  .history-dir.short { background: rgba(255,77,109,0.15); color: var(--red); }
-  .history-price { font-size: 12px; color: var(--muted); font-family: var(--mono); }
-  .history-right { text-align: right; }
-  .history-conf { font-size: 15px; font-weight: 700; }
-  .history-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  /* LOADING SPINNER */
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2px solid rgba(255,255,255,0.15);
-    border-top-color: var(--green);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-  .fade-in { animation: fadeIn 0.3s ease; }
-
-  .loading-center { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 0; color: var(--muted); font-size: 14px; }
-
-  .hidden { display: none !important; }
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+:root{--bg:#080b10;--sur:#0f1318;--sur2:#161c24;--bor:rgba(255,255,255,0.07);--txt:#e8edf5;--mut:#5a6478;--grn:#00e676;--red:#ff4d6d;--yel:#ffd740;--fn:'Space Grotesk',sans-serif;--mo:'Space Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--fn);min-height:100vh;-webkit-font-smoothing:antialiased}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bor);position:sticky;top:0;background:rgba(8,11,16,0.93);backdrop-filter:blur(12px);z-index:100}
+.logo{font-weight:700;font-size:17px}.logo span{color:var(--grn)}
+.lang-sw{display:flex;gap:3px;background:var(--sur);border-radius:8px;padding:3px}
+.lang-sw button{background:none;border:none;color:var(--mut);font-family:var(--fn);font-size:13px;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer}
+.lang-sw button.on{background:var(--sur2);color:var(--txt)}
+main{max-width:480px;margin:0 auto;padding:16px 16px 60px;display:flex;flex-direction:column;gap:12px}
+.tabs{display:flex;gap:6px;background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:4px}
+.tab{flex:1;background:none;border:none;color:var(--mut);font-family:var(--fn);font-size:14px;font-weight:600;padding:10px;border-radius:10px;cursor:pointer;transition:.15s}
+.tab.on{background:#fff;color:#000}
+.sels{display:flex;gap:8px;flex-wrap:wrap}
+select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);font-family:var(--fn);font-size:14px;font-weight:700;padding:10px 14px;border-radius:12px;cursor:pointer;outline:none}
+.ivbtn{background:var(--sur);border:1px solid var(--bor);color:var(--mut);font-family:var(--fn);font-size:13px;font-weight:600;padding:10px 16px;border-radius:10px;cursor:pointer;transition:.15s}
+.ivbtn.on{background:#fff;color:#000;border-color:#fff}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:16px;padding:18px}
+.fg-wrap{display:flex;align-items:center;justify-content:space-between}
+.fg-lbl{font-size:11px;color:var(--mut);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.fg-val{font-size:17px;font-weight:700}
+.fg-ring{position:relative;width:56px;height:56px}
+.fg-ring svg{transform:rotate(-90deg)}
+.fg-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mo);font-size:14px;font-weight:700}
+.pr-wrap{display:flex;align-items:center;justify-content:space-between}
+.pr-lbl{font-size:11px;color:var(--mut);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.pr-val{font-family:var(--mo);font-size:30px;font-weight:700;letter-spacing:-1px}
+.pr-ch{font-size:15px;font-weight:700;padding:8px 14px;border-radius:10px;font-family:var(--mo)}
+.pr-ch.pos{color:var(--grn);background:rgba(0,230,118,.12)}
+.pr-ch.neg{color:var(--red);background:rgba(255,77,109,.12)}
+.sig-card{text-align:center;padding:30px 24px 22px;border-radius:20px;border:1.5px solid var(--bor);background:var(--sur);transition:.3s}
+.sig-card.long{border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.06)}
+.sig-card.short{border-color:rgba(255,77,109,.4);background:rgba(255,77,109,.06)}
+.sig-card.neutral{border-color:rgba(255,215,64,.3);background:rgba(255,215,64,.05)}
+.sig-dir{font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:8px}
+.sig-card.long .sig-dir{color:var(--grn)}
+.sig-card.short .sig-dir{color:var(--red)}
+.sig-card.neutral .sig-dir{color:var(--yel)}
+.sig-sub{font-size:17px;color:rgba(255,255,255,.65);margin-bottom:8px}
+.sig-exp{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:6px}
+.sig-disc{font-size:10px;color:rgba(255,255,255,.2)}
+.conf-hd{display:flex;justify-content:space-between;margin-bottom:10px}
+.conf-lbl{font-size:13px;color:var(--mut)}
+.conf-pct{font-size:13px;font-weight:700}
+.conf-bg{background:rgba(255,255,255,.08);border-radius:6px;height:8px;overflow:hidden}
+.conf-fill{height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.sec-ttl{font-size:14px;font-weight:700;margin-bottom:12px}
+.reason{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.rdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.rdot.b{background:var(--grn)}.rdot.r{background:var(--red)}
+.rtxt{font-size:13px;color:rgba(255,255,255,.75);line-height:1.5}
+.lvrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bor)}
+.lvrow:last-of-type{border-bottom:none}
+.lv-nm{font-size:13px;color:var(--mut)}
+.lv-vl{font-family:var(--mo);font-size:14px;font-weight:700}
+.atr-note{font-size:10px;color:var(--mut);margin-top:10px}
+.ind-row{border-bottom:1px solid var(--bor)}
+.ind-row:last-child{border-bottom:none}
+.ind-main{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer}
+.ind-nm{font-size:13px;color:var(--mut)}
+.ind-ic{font-size:11px;color:rgba(255,255,255,.2);margin-left:5px}
+.ind-vl{font-family:var(--mo);font-size:14px;font-weight:700}
+.ind-vl.b{color:var(--grn)}.ind-vl.r{color:var(--red)}
+.ind-info{font-size:12px;color:rgba(255,255,255,.4);padding:4px 0 10px;display:none;line-height:1.5}
+.ind-info.open{display:block}
+.rbtn{width:100%;background:#fff;color:#000;border:none;font-family:var(--fn);font-size:15px;font-weight:700;padding:16px;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s}
+.rbtn:disabled{opacity:.4;cursor:not-allowed}
+.rbtn svg{width:16px;height:16px}
+.spin{width:20px;height:20px;border:2px solid rgba(255,255,255,.15);border-top-color:var(--grn);border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 0;color:var(--mut);font-size:14px}
+.hidden{display:none!important}
+.hist-empty{text-align:center;padding:60px 0;color:var(--mut);font-size:14px;line-height:1.8}
+.hist-row{display:flex;align-items:center;gap:14px;padding:14px;background:var(--sur);border:1px solid var(--bor);border-radius:14px;margin-bottom:10px}
+.hist-ic{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
+.hist-ic.long{background:rgba(0,230,118,.15);color:var(--grn)}
+.hist-ic.short{background:rgba(255,77,109,.15);color:var(--red)}
+.hist-meta{flex:1}
+.hist-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.hist-sym{font-size:14px;font-weight:700}
+.hist-dir{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
+.hist-dir.long{background:rgba(0,230,118,.15);color:var(--grn)}
+.hist-dir.short{background:rgba(255,77,109,.15);color:var(--red)}
+.hist-pr{font-size:12px;color:var(--mut);font-family:var(--mo)}
+.hist-rt{text-align:right}
+.hist-conf{font-size:15px;font-weight:700}
+.hist-time{font-size:11px;color:var(--mut);margin-top:2px}
 </style>
 </head>
 <body>
-
 <header>
   <div class="logo">Crypto<span>Signal</span></div>
-  <div class="lang-switch">
-    <button class="active" onclick="setLang('ru')" id="btn-ru">RU</button>
-    <button onclick="setLang('en')" id="btn-en">EN</button>
+  <div class="lang-sw">
+    <button class="on" id="btn-ru" onclick="setLang('ru')">RU</button>
+    <button id="btn-en" onclick="setLang('en')">EN</button>
   </div>
 </header>
-
 <main>
-  <!-- TABS -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="setTab('signal')" id="tab-signal" data-ru="📈 Сигнал" data-en="📈 Signal">📈 Сигнал</button>
-    <button class="tab-btn" onclick="setTab('history')" id="tab-history" data-ru="🕐 История" data-en="🕐 History">🕐 История</button>
+    <button class="tab on" id="tab-sig" onclick="setTab('signal')">📈 Сигнал</button>
+    <button class="tab" id="tab-his" onclick="setTab('history')">🕐 История</button>
   </div>
 
-  <!-- SIGNAL TAB -->
-  <div id="view-signal">
-    <!-- SELECTORS -->
-    <div class="selectors">
-      <select class="symbol-select" id="symbol-select" onchange="onSymbolChange()">
-        <option>BTC</option><option>ETH</option><option>BNB</option>
-        <option>SOL</option><option>XRP</option><option>DOGE</option>
-        <option>ADA</option><option>AVAX</option><option>MATIC</option><option>DOT</option>
+  <!-- SIGNAL VIEW -->
+  <div id="v-signal">
+    <div class="sels" style="margin-bottom:12px">
+      <select class="sym" id="sym-sel" onchange="onSym()">
+        <option>BTC</option><option>ETH</option><option>BNB</option><option>SOL</option>
+        <option>XRP</option><option>DOGE</option><option>ADA</option><option>AVAX</option>
+        <option>MATIC</option><option>DOT</option>
       </select>
-      <button class="interval-btn" onclick="setInterval('15m')" id="iv-15m">15m</button>
-      <button class="interval-btn active" onclick="setInterval('1h')" id="iv-1h">1h</button>
-      <button class="interval-btn" onclick="setInterval('4h')" id="iv-4h">4h</button>
-      <button class="interval-btn" onclick="setInterval('1d')" id="iv-1d">1d</button>
+      <button class="ivbtn" id="iv-15m" onclick="setIv('15m')">15m</button>
+      <button class="ivbtn on" id="iv-1h" onclick="setIv('1h')">1h</button>
+      <button class="ivbtn" id="iv-4h" onclick="setIv('4h')">4h</button>
+      <button class="ivbtn" id="iv-1d" onclick="setIv('1d')">1d</button>
     </div>
 
-    <!-- LOADING -->
-    <div class="loading-center" id="loading-block">
-      <div class="spinner"></div>
-      <span id="loading-text">Загружаем данные...</span>
+    <div class="loading" id="loading">
+      <div class="spin"></div>
+      <span id="load-txt">Загружаем данные...</span>
     </div>
 
-    <!-- CONTENT -->
-    <div id="content-block" class="hidden">
+    <div id="content" class="hidden">
       <!-- FEAR & GREED -->
-      <div class="card fg-card" id="fg-card" style="margin-bottom:14px">
+      <div class="card fg-wrap" style="margin-bottom:12px">
         <div>
-          <div class="fg-label" id="fg-title">FEAR & GREED INDEX</div>
-          <div class="fg-value" id="fg-label-text">—</div>
+          <div class="fg-lbl" id="fg-title">ИНДЕКС СТРАХА/ЖАДНОСТИ</div>
+          <div class="fg-val" id="fg-label">—</div>
         </div>
         <div class="fg-ring">
           <svg width="56" height="56" viewBox="0 0 56 56">
             <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
-            <circle id="fg-arc" cx="28" cy="28" r="22" fill="none" stroke="#fff" stroke-width="6"
-              stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2" transition="stroke-dashoffset 0.6s"/>
+            <circle id="fg-arc" cx="28" cy="28" r="22" fill="none" stroke="#00e676" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"/>
           </svg>
-          <div class="fg-ring-num" id="fg-num">—</div>
+          <div class="fg-num" id="fg-num">—</div>
         </div>
       </div>
 
       <!-- PRICE -->
-      <div class="card price-card" style="margin-bottom:14px">
+      <div class="card pr-wrap" style="margin-bottom:12px">
         <div>
-          <div class="price-label" id="price-pair-label">BTC/USDT</div>
-          <div class="price-value" id="price-value">—</div>
+          <div class="pr-lbl" id="pr-pair">BTC/USDT</div>
+          <div class="pr-val" id="pr-val">—</div>
         </div>
-        <div class="price-change" id="price-change">—</div>
+        <div class="pr-ch" id="pr-ch">—</div>
       </div>
 
       <!-- SIGNAL -->
-      <div class="signal-card" id="signal-card" style="margin-bottom:14px">
-        <div class="signal-direction" id="signal-direction">—</div>
-        <div class="signal-sub" id="signal-sub">—</div>
-        <div class="signal-explanation" id="signal-explanation"></div>
-        <div class="signal-disclaimer" id="signal-disclaimer">Не является финансовым советом. Торгуй на свой риск.</div>
+      <div class="sig-card" id="sig-card" style="margin-bottom:12px">
+        <div class="sig-dir" id="sig-dir">—</div>
+        <div class="sig-sub" id="sig-sub">—</div>
+        <div class="sig-exp" id="sig-exp"></div>
+        <div class="sig-disc" id="sig-disc">Не является финансовым советом. Торгуй на свой риск.</div>
       </div>
 
       <!-- CONFIDENCE -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="conf-header">
-          <span class="conf-label" id="conf-label">Уверенность</span>
-          <span class="conf-value" id="conf-value">0%</span>
+      <div class="card" style="margin-bottom:12px">
+        <div class="conf-hd">
+          <span class="conf-lbl" id="conf-lbl">Уверенность</span>
+          <span class="conf-pct" id="conf-pct">0%</span>
         </div>
-        <div class="conf-bar-bg">
-          <div class="conf-bar-fill" id="conf-bar" style="width:0%;background:var(--yellow)"></div>
-        </div>
+        <div class="conf-bg"><div class="conf-fill" id="conf-fill"></div></div>
       </div>
 
       <!-- REASONS -->
-      <div class="card" id="reasons-card" style="margin-bottom:14px">
-        <div class="section-title" id="reasons-title">Причины сигнала</div>
-        <div id="reasons-list"></div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="sec-ttl" id="reasons-ttl">Причины сигнала</div>
+        <div id="reasons"></div>
       </div>
 
       <!-- LEVELS -->
-      <div class="card" id="levels-card" style="margin-bottom:14px;display:none">
-        <div class="section-title" id="levels-title">Уровни сделки</div>
-        <div class="level-row">
-          <span class="level-name" id="lbl-entry">Вход</span>
-          <span class="level-val" id="level-entry" style="color:var(--text)">—</span>
-        </div>
-        <div class="level-row">
-          <span class="level-name" id="lbl-tp1">Тейк 1</span>
-          <span class="level-val" id="level-tp1" style="color:var(--green)">—</span>
-        </div>
-        <div class="level-row">
-          <span class="level-name" id="lbl-tp2">Тейк 2</span>
-          <span class="level-val" id="level-tp2" style="color:var(--green)">—</span>
-        </div>
-        <div class="level-row" style="border-bottom:none">
-          <span class="level-name" id="lbl-sl">Стоп</span>
-          <span class="level-val" id="level-sl" style="color:var(--red)">—</span>
-        </div>
-        <div class="level-atr-note" id="atr-note">Уровни рассчитаны на основе ATR</div>
+      <div class="card hidden" id="levels" style="margin-bottom:12px">
+        <div class="sec-ttl" id="lv-ttl">Уровни сделки</div>
+        <div class="lvrow"><span class="lv-nm" id="lv-entry-nm">Вход</span><span class="lv-vl" id="lv-entry" style="color:var(--txt)">—</span></div>
+        <div class="lvrow"><span class="lv-nm" id="lv-tp1-nm">Тейк 1</span><span class="lv-vl" id="lv-tp1" style="color:var(--grn)">—</span></div>
+        <div class="lvrow"><span class="lv-nm" id="lv-tp2-nm">Тейк 2</span><span class="lv-vl" id="lv-tp2" style="color:var(--grn)">—</span></div>
+        <div class="lvrow"><span class="lv-nm" id="lv-sl-nm">Стоп</span><span class="lv-vl" id="lv-sl" style="color:var(--red)">—</span></div>
+        <div class="atr-note" id="atr-note">Уровни рассчитаны на основе ATR</div>
       </div>
 
       <!-- INDICATORS -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="section-title" id="ind-title">Индикаторы</div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="sec-ttl" id="ind-ttl">Индикаторы</div>
         <div id="ind-list"></div>
       </div>
 
-      <!-- REFRESH -->
-      <button class="refresh-btn" id="refresh-btn" onclick="loadData()">
+      <button class="rbtn" id="rbtn" onclick="loadData()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
         </svg>
-        <span id="refresh-label">Обновить</span>
+        <span id="rbtn-txt">Обновить</span>
       </button>
     </div>
   </div>
 
-  <!-- HISTORY TAB -->
-  <div id="view-history" class="hidden">
-    <div id="history-list"></div>
+  <!-- HISTORY VIEW -->
+  <div id="v-history" class="hidden">
+    <div id="hist-list"></div>
   </div>
 </main>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────
-let lang = 'ru';
-let symbol = 'BTC';
-let interval = '1h';
-let history = JSON.parse(localStorage.getItem('signal_history') || '[]');
-let lastDirection = null;
-let refreshTimer = null;
+var lang = 'ru';
+var sym = 'BTC';
+var iv = '1h';
+var history = [];
+var lastDir = null;
+var timer = null;
 
-// ── i18n ──────────────────────────────────────────────────────────────────
-const T = {
-  loading:      { ru: 'Загружаем данные...', en: 'Loading data...' },
-  refresh:      { ru: 'Обновить', en: 'Refresh' },
-  confidence:   { ru: 'Уверенность', en: 'Confidence' },
-  reasons:      { ru: 'Причины сигнала', en: 'Signal reasons' },
-  levels:       { ru: 'Уровни сделки', en: 'Trade levels' },
-  entry:        { ru: 'Вход', en: 'Entry' },
-  tp1:          { ru: 'Тейк 1', en: 'TP 1' },
-  tp2:          { ru: 'Тейк 2', en: 'TP 2' },
-  sl:           { ru: 'Стоп', en: 'Stop' },
-  atr:          { ru: 'Уровни рассчитаны на основе ATR', en: 'Levels based on ATR' },
-  indicators:   { ru: 'Индикаторы', en: 'Indicators' },
-  disclaimer:   { ru: 'Не является финансовым советом. Торгуй на свой риск.', en: 'Not financial advice. Trade at your own risk.' },
-  long_sub:     { ru: 'Открывай лонг', en: 'Go long' },
-  short_sub:    { ru: 'Открывай шорт', en: 'Go short' },
-  neutral_sub:  { ru: 'Ждём сигнала', en: 'Waiting for signal' },
-  long_dir:     { ru: 'LONG', en: 'LONG' },
-  short_dir:    { ru: 'SHORT', en: 'SHORT' },
-  neutral_dir:  { ru: 'НЕЙТРАЛЬНО', en: 'NEUTRAL' },
-  hist_empty:   { ru: 'История пуста\nСигналы появятся здесь когда направление изменится', en: 'No history yet\nSignals will appear when direction changes' },
-  fg_label:     { ru: 'ИНДЕКС СТРАХА/ЖАДНОСТИ', en: 'FEAR & GREED INDEX' },
-  tab_signal:   { ru: '📈 Сигнал', en: '📈 Signal' },
-  tab_hist:     { ru: '🕐 История', en: '🕐 History' },
-  rsi_info:     { ru: '< 30 = перепродан (покупай), > 70 = перекуплен (продавай)', en: '< 30 = oversold (buy), > 70 = overbought (sell)' },
-  ema9_info:    { ru: 'Быстрая скользящая за 9 свечей. Цена выше — бычий знак.', en: 'Fast MA (9 candles). Price above = bullish.' },
-  ema21_info:   { ru: 'Средняя за 21 свечу. Среднесрочный тренд.', en: 'MA (21 candles). Medium-term trend.' },
-  ema50_info:   { ru: 'Медленная за 50 свечей. Главный уровень тренда.', en: 'Slow MA (50 candles). Main trend level.' },
-  macd_info:    { ru: 'Разница EMA 12 и EMA 26. Выше сигнальной = бычий импульс.', en: 'EMA 12 minus EMA 26. Above signal = bullish momentum.' },
-  vol_info:     { ru: 'Объём текущей свечи vs среднее за 20. > 1x = повышенная активность.', en: 'Current candle volume vs 20-period avg. > 1x = high activity.' },
-  rsi_ob:       { ru: 'Перекуплен', en: 'Overbought' },
-  rsi_os:       { ru: 'Перепродан', en: 'Oversold' },
-  rsi_nb:       { ru: 'Нейтральный бычий', en: 'Neutral bullish' },
-  rsi_nbear:    { ru: 'Нейтральный медвежий', en: 'Neutral bearish' },
-  ema_up:       { ru: 'EMA 9>21>50 — восходящий тренд', en: 'EMA 9>21>50 — uptrend' },
-  ema_down:     { ru: 'EMA 9<21<50 — нисходящий тренд', en: 'EMA 9<21<50 — downtrend' },
-  ema_above50:  { ru: 'Цена выше EMA 50', en: 'Price above EMA 50' },
-  ema_below50:  { ru: 'Цена ниже EMA 50', en: 'Price below EMA 50' },
-  macd_bull:    { ru: 'Бычье пересечение', en: 'Bullish crossover' },
-  macd_bear:    { ru: 'Медвежье пересечение', en: 'Bearish crossover' },
-  macd_neut:    { ru: 'Нейтральный', en: 'Neutral' },
-  vol_high_up:  { ru: 'Высокий объём подтверждает рост', en: 'High volume confirms uptrend' },
-  vol_high_dn:  { ru: 'Высокий объём подтверждает падение', en: 'High volume confirms downtrend' },
-  vol_norm:     { ru: 'Нормальный объём', en: 'Normal volume' },
+try { history = JSON.parse(localStorage.getItem('csh') || '[]'); } catch(e) { history = []; }
+
+var T = {
+  loading:    {ru:'Загружаем данные...',  en:'Loading data...'},
+  refresh:    {ru:'Обновить',             en:'Refresh'},
+  confidence: {ru:'Уверенность',          en:'Confidence'},
+  reasons:    {ru:'Причины сигнала',      en:'Signal reasons'},
+  levels:     {ru:'Уровни сделки',        en:'Trade levels'},
+  entry:      {ru:'Вход',                 en:'Entry'},
+  tp1:        {ru:'Тейк 1',              en:'TP 1'},
+  tp2:        {ru:'Тейк 2',              en:'TP 2'},
+  sl:         {ru:'Стоп',                en:'Stop'},
+  atr:        {ru:'Уровни рассчитаны на основе ATR', en:'Levels based on ATR'},
+  indicators: {ru:'Индикаторы',           en:'Indicators'},
+  disc:       {ru:'Не является финансовым советом. Торгуй на свой риск.', en:'Not financial advice. Trade at your own risk.'},
+  long_sub:   {ru:'Открывай лонг',        en:'Go long'},
+  short_sub:  {ru:'Открывай шорт',        en:'Go short'},
+  neut_sub:   {ru:'Ждём сигнала',         en:'Waiting for signal'},
+  long_dir:   {ru:'LONG',                 en:'LONG'},
+  short_dir:  {ru:'SHORT',                en:'SHORT'},
+  neut_dir:   {ru:'НЕЙТРАЛЬНО',           en:'NEUTRAL'},
+  no_hist:    {ru:'История пуста\nСигналы появятся когда направление изменится', en:'No history yet\nSignals appear when direction changes'},
+  fg_lbl:     {ru:'ИНДЕКС СТРАХА/ЖАДНОСТИ', en:'FEAR & GREED INDEX'},
+  tab_sig:    {ru:'📈 Сигнал',            en:'📈 Signal'},
+  tab_his:    {ru:'🕐 История',           en:'🕐 History'},
+  rsi_i:      {ru:'< 30 = перепродан (покупай), > 70 = перекуплен (продавай)', en:'< 30 = oversold (buy), > 70 = overbought (sell)'},
+  ema9_i:     {ru:'Быстрая скользящая за 9 свечей. Цена выше — бычий знак.', en:'Fast MA (9 bars). Price above = bullish.'},
+  ema21_i:    {ru:'Средняя за 21 свечу. Среднесрочный тренд.', en:'MA (21 bars). Medium-term trend.'},
+  ema50_i:    {ru:'Медленная за 50 свечей. Главный тренд.', en:'Slow MA (50 bars). Main trend.'},
+  macd_i:     {ru:'EMA12 − EMA26. Выше сигнальной = бычий импульс.', en:'EMA12 − EMA26. Above signal = bullish momentum.'},
+  vol_i:      {ru:'Объём vs среднее за 20 свечей. > 1x = высокая активность.', en:'Volume vs 20-bar avg. > 1x = high activity.'},
+  rsi_ob:     {ru:'Перекуплен',           en:'Overbought'},
+  rsi_os:     {ru:'Перепродан',           en:'Oversold'},
+  rsi_nb:     {ru:'Нейтральный бычий',    en:'Neutral bullish'},
+  rsi_nbr:    {ru:'Нейтральный медвежий', en:'Neutral bearish'},
+  ema_up:     {ru:'EMA 9>21>50 — восходящий тренд', en:'EMA 9>21>50 — uptrend'},
+  ema_dn:     {ru:'EMA 9<21<50 — нисходящий тренд', en:'EMA 9<21<50 — downtrend'},
+  ema_a50:    {ru:'Цена выше EMA 50',     en:'Price above EMA 50'},
+  ema_b50:    {ru:'Цена ниже EMA 50',     en:'Price below EMA 50'},
+  macd_bull:  {ru:'Бычье пересечение',    en:'Bullish crossover'},
+  macd_bear:  {ru:'Медвежье пересечение', en:'Bearish crossover'},
+  macd_neut:  {ru:'Нейтральный',          en:'Neutral'},
+  vol_up:     {ru:'Высокий объём подтверждает рост',    en:'High volume confirms uptrend'},
+  vol_dn:     {ru:'Высокий объём подтверждает падение', en:'High volume confirms downtrend'},
+  vol_norm:   {ru:'Нормальный объём',     en:'Normal volume'},
+  bull_rsi:   {ru:'RSI бычий',  en:'RSI bullish'},
+  bear_rsi:   {ru:'RSI медвежий', en:'RSI bearish'},
+  bull_macd:  {ru:'MACD бычий',  en:'MACD bullish'},
+  bear_macd:  {ru:'MACD медвежий',en:'MACD bearish'}
 };
-const t = k => T[k]?.[lang] ?? T[k]?.ru ?? k;
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-const fmtPrice = v => v >= 1000 ? `$${v.toFixed(2)}` : v >= 1 ? `$${v.toFixed(4)}` : `$${v.toFixed(6)}`;
-const $ = id => document.getElementById(id);
+function t(k) { return (T[k] && T[k][lang]) || (T[k] && T[k].ru) || k; }
+
+function el(id) { return document.getElementById(id); }
+
+function fmtP(v) {
+  if (v >= 1000) return '$' + v.toFixed(2);
+  if (v >= 1)    return '$' + v.toFixed(4);
+  return '$' + v.toFixed(6);
+}
 
 // ── Indicators ────────────────────────────────────────────────────────────
-function calcRSI(prices, period = 14) {
+function calcRSI(prices, period) {
+  period = period || 14;
   if (prices.length < period + 1) return 50;
-  const recent = prices.slice(-period - 1);
-  let gains = 0, losses = 0;
-  for (let i = 1; i < recent.length; i++) {
-    const d = recent[i] - recent[i-1];
+  var recent = prices.slice(-period - 1);
+  var gains = 0, losses = 0;
+  for (var i = 1; i < recent.length; i++) {
+    var d = recent[i] - recent[i-1];
     if (d > 0) gains += d; else losses -= d;
   }
-  const ag = gains / period, al = losses / period;
+  var ag = gains / period, al = losses / period;
   if (al === 0) return 100;
   return 100 - 100 / (1 + ag / al);
 }
 
 function calcEMA(prices, period) {
   if (prices.length < period) return prices[prices.length - 1] || 0;
-  const k = 2 / (period + 1);
-  let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < prices.length; i++) ema = prices[i] * k + ema * (1 - k);
+  var k = 2 / (period + 1);
+  var ema = 0;
+  for (var i = 0; i < period; i++) ema += prices[i];
+  ema /= period;
+  for (var i = period; i < prices.length; i++) ema = prices[i] * k + ema * (1 - k);
   return ema;
 }
 
 function calcEMAArr(prices, period) {
-  if (prices.length < period) return new Array(prices.length).fill(prices[prices.length-1] || 0);
-  const k = 2 / (period + 1);
-  let ema = prices.slice(0, period).reduce((a,b)=>a+b,0) / period;
-  const result = new Array(period - 1).fill(0);
+  if (prices.length < period) return prices.map(function() { return prices[prices.length-1] || 0; });
+  var k = 2 / (period + 1);
+  var ema = 0;
+  for (var i = 0; i < period; i++) ema += prices[i];
+  ema /= period;
+  var result = [];
+  for (var i = 0; i < period - 1; i++) result.push(0);
   result.push(ema);
-  for (let i = period; i < prices.length; i++) {
+  for (var i = period; i < prices.length; i++) {
     ema = prices[i] * k + ema * (1 - k);
     result.push(ema);
   }
@@ -547,334 +319,357 @@ function calcEMAArr(prices, period) {
 }
 
 function calcMACD(prices) {
-  if (prices.length < 35) return { macdLine: 0, signalLine: 0 };
-  const e12 = calcEMAArr(prices, 12);
-  const e26 = calcEMAArr(prices, 26);
-  const mc = e12.map((v, i) => v - e26[i]);
-  const sig = calcEMAArr(mc, 9);
-  return { macdLine: mc[mc.length-1], signalLine: sig[sig.length-1] };
+  if (prices.length < 35) return { line: 0, signal: 0 };
+  var e12 = calcEMAArr(prices, 12);
+  var e26 = calcEMAArr(prices, 26);
+  var mc = [];
+  for (var i = 0; i < Math.min(e12.length, e26.length); i++) mc.push(e12[i] - e26[i]);
+  var sig = calcEMAArr(mc, 9);
+  return { line: mc[mc.length-1], signal: sig[sig.length-1] };
 }
 
-function calcVolRatio(candles, period = 20) {
+function calcVolRatio(candles, period) {
+  period = period || 20;
   if (candles.length < period) return 1;
-  const recent = candles.slice(-period);
-  const avg = recent.slice(0, -1).reduce((a,c)=>a+c.volume,0) / (period - 1);
+  var recent = candles.slice(-period);
+  var sum = 0;
+  for (var i = 0; i < recent.length - 1; i++) sum += recent[i].volume;
+  var avg = sum / (period - 1);
   return avg > 0 ? candles[candles.length-1].volume / avg : 1;
 }
 
-function calcATR(candles, period = 14) {
-  const recent = candles.slice(-period);
-  const trs = recent.map(c => c.high - c.low);
-  return trs.reduce((a,b)=>a+b,0) / period;
+function calcATR(candles, period) {
+  period = period || 14;
+  var recent = candles.slice(-period);
+  var sum = 0;
+  for (var i = 0; i < recent.length; i++) sum += recent[i].high - recent[i].low;
+  return sum / period;
 }
 
-function generateSignal(candles) {
-  const prices = candles.map(c => c.close);
-  const rsi = calcRSI(prices);
-  const ema9 = calcEMA(prices, 9);
-  const ema21 = calcEMA(prices, 21);
-  const ema50 = calcEMA(prices, 50);
-  const macd = calcMACD(prices);
-  const volRatio = calcVolRatio(candles);
-  const price = prices[prices.length - 1];
-  const atr = calcATR(candles);
+function genSignal(candles) {
+  if (!candles || candles.length < 10) return { direction: 'neutral', confidence: 0, reasons: [], levels: { entry: 0, tp1: 0, tp2: 0, sl: 0 }, explanation: 'Недостаточно данных', ind: { rsi: 50, ema9: 0, ema21: 0, ema50: 0, macd: { line: 0, signal: 0 }, volRatio: 1, price: 0 } };
+  var prices = candles.map(function(c) { return c.close; });
+  var rsi = calcRSI(prices);
+  var ema9 = calcEMA(prices, 9);
+  var ema21 = calcEMA(prices, 21);
+  var ema50 = calcEMA(prices, 50);
+  var macd = calcMACD(prices);
+  var volRatio = calcVolRatio(candles);
+  var price = prices[prices.length - 1];
+  var atr = calcATR(candles);
 
-  let score = 0, maxScore = 0;
-  const reasons = [];
+  var score = 0, maxScore = 0, reasons = [];
 
   // RSI
   maxScore += 3;
-  if (rsi < 30)      { score += 3; reasons.push({ text: `[RSI] ${t('rsi_os')} (${rsi.toFixed(1)})`, bull: true }); }
-  else if (rsi > 70) { score -= 3; reasons.push({ text: `[RSI] ${t('rsi_ob')} (${rsi.toFixed(1)})`, bull: false }); }
-  else if (rsi < 50) { score -= 1; reasons.push({ text: `[RSI] ${t('rsi_nbear')} (${rsi.toFixed(1)})`, bull: false }); }
-  else               { score += 1; reasons.push({ text: `[RSI] ${t('rsi_nb')} (${rsi.toFixed(1)})`, bull: true }); }
+  if (rsi < 30)      { score += 3; reasons.push({ text: '[RSI] ' + t('rsi_os') + ' (' + rsi.toFixed(1) + ')', bull: true }); }
+  else if (rsi > 70) { score -= 3; reasons.push({ text: '[RSI] ' + t('rsi_ob') + ' (' + rsi.toFixed(1) + ')', bull: false }); }
+  else if (rsi < 50) { score -= 1; reasons.push({ text: '[RSI] ' + t('rsi_nbr') + ' (' + rsi.toFixed(1) + ')', bull: false }); }
+  else               { score += 1; reasons.push({ text: '[RSI] ' + t('rsi_nb') + ' (' + rsi.toFixed(1) + ')', bull: true }); }
 
   // EMA
   maxScore += 3;
-  if (ema9 > ema21 && ema21 > ema50 && price > ema9) { score += 3; reasons.push({ text: `[EMA] ${t('ema_up')}`, bull: true }); }
-  else if (ema9 < ema21 && ema21 < ema50 && price < ema9) { score -= 3; reasons.push({ text: `[EMA] ${t('ema_down')}`, bull: false }); }
-  else if (price > ema50) { score += 1; reasons.push({ text: `[EMA] ${t('ema_above50')}`, bull: true }); }
-  else { score -= 1; reasons.push({ text: `[EMA] ${t('ema_below50')}`, bull: false }); }
+  if (ema9 > ema21 && ema21 > ema50 && price > ema9)      { score += 3; reasons.push({ text: '[EMA] ' + t('ema_up'), bull: true }); }
+  else if (ema9 < ema21 && ema21 < ema50 && price < ema9) { score -= 3; reasons.push({ text: '[EMA] ' + t('ema_dn'), bull: false }); }
+  else if (price > ema50) { score += 1; reasons.push({ text: '[EMA] ' + t('ema_a50'), bull: true }); }
+  else                    { score -= 1; reasons.push({ text: '[EMA] ' + t('ema_b50'), bull: false }); }
 
   // MACD
   maxScore += 3;
-  if (macd.macdLine > macd.signalLine) {
-    const pts = macd.macdLine > 0 ? 3 : 2; score += pts;
-    reasons.push({ text: `[MACD] ${t('macd_bull')}`, bull: true });
-  } else if (macd.macdLine < macd.signalLine) {
-    const pts = macd.macdLine < 0 ? 3 : 2; score -= pts;
-    reasons.push({ text: `[MACD] ${t('macd_bear')}`, bull: false });
+  if (macd.line > macd.signal) {
+    var pts = macd.line > 0 ? 3 : 2; score += pts;
+    reasons.push({ text: '[MACD] ' + t('macd_bull'), bull: true });
+  } else if (macd.line < macd.signal) {
+    var pts = macd.line < 0 ? 3 : 2; score -= pts;
+    reasons.push({ text: '[MACD] ' + t('macd_bear'), bull: false });
   } else {
-    reasons.push({ text: `[MACD] ${t('macd_neut')}`, bull: score >= 0 });
+    reasons.push({ text: '[MACD] ' + t('macd_neut'), bull: score >= 0 });
   }
 
   // Volume
   maxScore += 1;
   if (volRatio > 1.5) {
-    if (score > 0) { score += 1; reasons.push({ text: `[Объём] ${t('vol_high_up')}`, bull: true }); }
-    else if (score < 0) { score -= 1; reasons.push({ text: `[Объём] ${t('vol_high_dn')}`, bull: false }); }
+    if (score > 0)      { score += 1; reasons.push({ text: '[' + (lang==='ru'?'Объём':'Volume') + '] ' + t('vol_up'), bull: true }); }
+    else if (score < 0) { score -= 1; reasons.push({ text: '[' + (lang==='ru'?'Объём':'Volume') + '] ' + t('vol_dn'), bull: false }); }
   } else {
-    reasons.push({ text: `[Объём] ${t('vol_norm')} (${volRatio.toFixed(1)}x)`, bull: score >= 0 });
+    reasons.push({ text: '[' + (lang==='ru'?'Объём':'Volume') + '] ' + t('vol_norm') + ' (' + volRatio.toFixed(1) + 'x)', bull: score >= 0 });
   }
 
-  const confidence = Math.min(100, Math.round(Math.abs(score) / maxScore * 100));
-  const direction = score > 2 ? 'long' : score < -2 ? 'short' : 'neutral';
+  var confidence = Math.min(100, Math.round(Math.abs(score) / maxScore * 100));
+  var direction = score > 2 ? 'long' : score < -2 ? 'short' : 'neutral';
 
-  // Levels
-  const levels = direction === 'long'
-    ? { entry: price, tp1: price + atr*1.5, tp2: price + atr*3, sl: price - atr }
-    : direction === 'short'
-    ? { entry: price, tp1: price - atr*1.5, tp2: price - atr*3, sl: price + atr }
-    : { entry: price, tp1: price, tp2: price, sl: price };
+  var levels;
+  if (direction === 'long') {
+    levels = { entry: price, tp1: price + atr*1.5, tp2: price + atr*3, sl: price - atr };
+  } else if (direction === 'short') {
+    levels = { entry: price, tp1: price - atr*1.5, tp2: price - atr*3, sl: price + atr };
+  } else {
+    levels = { entry: price, tp1: price, tp2: price, sl: price };
+  }
 
   // Explanation
-  const rsiStr = `RSI ${Math.round(rsi)}`;
-  const emaDir = ema9 > ema21 && ema21 > ema50 ? 'EMA ↑' : 'EMA ↓';
-  const macdStr = macd.macdLine > macd.signalLine ? (lang==='ru'?'MACD бычий':'MACD bullish') : (lang==='ru'?'MACD медвежий':'MACD bearish');
-  let explanation = `${rsiStr} · ${emaDir} · ${macdStr}`;
+  var rsiStr = 'RSI ' + Math.round(rsi);
+  var emaDir = (ema9 > ema21 && ema21 > ema50) ? 'EMA ↑' : 'EMA ↓';
+  var macdStr = macd.line > macd.signal ? t('bull_macd') : t('bear_macd');
+  var explanation = rsiStr + ' · ' + emaDir + ' · ' + macdStr;
+
   if (direction === 'neutral') {
-    const bull = [], bear = [];
-    if (rsi >= 50) bull.push(lang==='ru'?'RSI бычий':'RSI bullish'); else bear.push(lang==='ru'?'RSI медвежий':'RSI bearish');
+    var bull = [], bear = [];
+    if (rsi >= 50) bull.push(t('bull_rsi')); else bear.push(t('bear_rsi'));
     if (ema9 > ema21) bull.push('EMA ↑'); else bear.push('EMA ↓');
-    if (macd.macdLine > macd.signalLine) bull.push(lang==='ru'?'MACD бычий':'MACD bull'); else bear.push(lang==='ru'?'MACD медвежий':'MACD bear');
-    explanation = bull.length && bear.length ? `${bull.join(', ')} vs ${bear.join(', ')}` : explanation;
+    if (macd.line > macd.signal) bull.push(t('bull_macd')); else bear.push(t('bear_macd'));
+    if (bull.length && bear.length) explanation = bull.join(', ') + ' vs ' + bear.join(', ');
   }
 
-  return { direction, confidence, reasons, levels,
-    indicators: { rsi, ema9, ema21, ema50, macd, volRatio, price } , explanation };
+  return {
+    direction: direction, confidence: confidence,
+    reasons: reasons, levels: levels, explanation: explanation,
+    ind: { rsi: rsi, ema9: ema9, ema21: ema21, ema50: ema50, macd: macd, volRatio: volRatio, price: price }
+  };
 }
 
-// ── API ───────────────────────────────────────────────────────────────────
-const BINANCE = 'https://api.binance.com/api/v3';
-const PROXY = 'https://corsproxy.io/?url=';
+// ── API ────────────────────────────────────────────────────────────────────
+var BASE = 'https://api.binance.com/api/v3';
+var PROXY = 'https://corsproxy.io/?url=';
 
-async function apiFetch(url) {
-  try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('direct failed');
+function apiFetch(url) {
+  return fetch(url).then(function(r) {
+    if (!r.ok) throw new Error('fail');
     return r.json();
-  } catch {
-    const r = await fetch(PROXY + encodeURIComponent(url));
-    return r.json();
-  }
+  }).catch(function() {
+    return fetch(PROXY + encodeURIComponent(url)).then(function(r) { return r.json(); });
+  });
 }
 
-async function fetchKlines() {
-  const d = await apiFetch(`${BINANCE}/klines?symbol=${symbol}USDT&interval=${interval}&limit=100`);
-  return d.map(k => ({ close: +k[4], volume: +k[5], high: +k[2], low: +k[3] }));
+function fetchKlines() {
+  return apiFetch(BASE + '/klines?symbol=' + sym + 'USDT&interval=' + iv + '&limit=100').then(function(d) {
+    if (!Array.isArray(d) || d.length === 0) throw new Error('empty');
+    return d.map(function(k) { return { close: +k[4], volume: +k[5], high: +k[2], low: +k[3] }; });
+  });
 }
-async function fetchPrice() {
-  const d = await apiFetch(`${BINANCE}/ticker/price?symbol=${symbol}USDT`);
-  return +d.price;
+function fetchPrice() {
+  return apiFetch(BASE + '/ticker/price?symbol=' + sym + 'USDT').then(function(d) { return +d.price; });
 }
-async function fetch24h() {
-  const d = await apiFetch(`${BINANCE}/ticker/24hr?symbol=${symbol}USDT`);
-  return +d.priceChangePercent;
+function fetch24h() {
+  return apiFetch(BASE + '/ticker/24hr?symbol=' + sym + 'USDT').then(function(d) { return +d.priceChangePercent; });
 }
-async function fetchFG() {
-  const r = await fetch('https://api.alternative.me/fng/?limit=1');
-  const d = await r.json();
-  return { value: +d.data[0].value, label: d.data[0].value_classification };
+function fetchFG() {
+  return fetch('https://api.alternative.me/fng/?limit=1').then(function(r) { return r.json(); }).then(function(d) {
+    return { value: +d.data[0].value, label: d.data[0].value_classification };
+  });
 }
 
-// ── Render ────────────────────────────────────────────────────────────────
+// ── Render ─────────────────────────────────────────────────────────────────
+function setText(id, val) { var e = el(id); if (e) e.textContent = val; }
+function setHTML(id, val) { var e = el(id); if (e) e.innerHTML = val; }
+function setCls(id, val)  { var e = el(id); if (e) e.className = val; }
+
 function renderFG(fg) {
-  $('fg-title').textContent = t('fg_label');
-  $('fg-label-text').textContent = fg.label;
-  $('fg-num').textContent = fg.value;
-  const color = fg.value < 25 ? '#ff4d6d' : fg.value < 45 ? '#ff9800' : fg.value < 55 ? '#ffd740' : '#00e676';
-  $('fg-label-text').style.color = color;
-  $('fg-ring-num').style.color = color;
-  const circumference = 138.2;
-  const offset = circumference - (fg.value / 100) * circumference;
-  const arc = $('fg-arc');
-  if (arc) { arc.style.strokeDashoffset = offset; arc.style.stroke = color; }
+  var color = fg.value < 25 ? '#ff4d6d' : fg.value < 45 ? '#ff9800' : fg.value < 55 ? '#ffd740' : '#00e676';
+  setText('fg-title', t('fg_lbl'));
+  setText('fg-label', fg.label);
+  setText('fg-num', fg.value);
+  var numEl = el('fg-num'); if (numEl) numEl.style.color = color;
+  var labEl = el('fg-label'); if (labEl) labEl.style.color = color;
+  var arc = el('fg-arc');
+  if (arc) {
+    var offset = 138.2 - (fg.value / 100) * 138.2;
+    arc.style.strokeDashoffset = offset;
+    arc.style.stroke = color;
+  }
 }
 
 function renderPrice(price, change) {
-  $('price-pair-label').textContent = `${symbol}/USDT`;
-  $('price-value').textContent = fmtPrice(price);
-  const el = $('price-change');
-  const pos = change >= 0;
-  el.textContent = `${pos?'+':''}${change.toFixed(2)}%`;
-  el.className = `price-change ${pos?'pos':'neg'}`;
+  setText('pr-pair', sym + '/USDT');
+  setText('pr-val', fmtP(price));
+  var pos = change >= 0;
+  var chEl = el('pr-ch');
+  if (chEl) {
+    chEl.textContent = (pos ? '+' : '') + change.toFixed(2) + '%';
+    chEl.className = 'pr-ch ' + (pos ? 'pos' : 'neg');
+  }
 }
 
 function renderSignal(sig) {
-  const card = $('signal-card');
-  card.className = `signal-card ${sig.direction} fade-in`;
+  var card = el('sig-card');
+  if (card) card.className = 'sig-card ' + sig.direction;
 
-  const dirMap = { long: t('long_dir'), short: t('short_dir'), neutral: t('neutral_dir') };
-  const subMap = { long: t('long_sub'), short: t('short_sub'), neutral: t('neutral_sub') };
-  $('signal-direction').textContent = dirMap[sig.direction];
-  $('signal-sub').textContent = subMap[sig.direction];
-  $('signal-explanation').textContent = sig.explanation;
-  $('signal-disclaimer').textContent = t('disclaimer');
+  var dirMap = { long: t('long_dir'), short: t('short_dir'), neutral: t('neut_dir') };
+  var subMap = { long: t('long_sub'), short: t('short_sub'), neutral: t('neut_sub') };
+  setText('sig-dir', dirMap[sig.direction]);
+  setText('sig-sub', subMap[sig.direction]);
+  setText('sig-exp', sig.explanation);
+  setText('sig-disc', t('disc'));
 
   // Confidence
-  $('conf-label').textContent = t('confidence');
-  $('conf-value').textContent = `${sig.confidence}%`;
-  const barColor = sig.direction === 'long' ? '#00e676' : sig.direction === 'short' ? '#ff4d6d' : '#ffd740';
-  const bar = $('conf-bar');
-  if (bar) {
-    bar.style.background = barColor;
-    setTimeout(() => { bar.style.width = sig.confidence + '%'; }, 50);
+  setText('conf-lbl', t('confidence'));
+  setText('conf-pct', sig.confidence + '%');
+  var barColor = sig.direction === 'long' ? '#00e676' : sig.direction === 'short' ? '#ff4d6d' : '#ffd740';
+  var fill = el('conf-fill');
+  if (fill) {
+    fill.style.background = barColor;
+    setTimeout(function() { fill.style.width = sig.confidence + '%'; }, 50);
   }
 
   // Reasons
-  $('reasons-title').textContent = t('reasons');
-  const rl = $('reasons-list');
-  rl.innerHTML = sig.reasons.map(r =>
-    `<div class="reason-row">
-      <div class="reason-dot ${r.bull?'bull':'bear'}"></div>
-      <div class="reason-text">${r.text}</div>
-    </div>`
-  ).join('');
+  setText('reasons-ttl', t('reasons'));
+  var rHTML = '';
+  for (var i = 0; i < sig.reasons.length; i++) {
+    var r = sig.reasons[i];
+    rHTML += '<div class="reason"><div class="rdot ' + (r.bull ? 'b' : 'r') + '"></div><div class="rtxt">' + r.text + '</div></div>';
+  }
+  setHTML('reasons', rHTML);
 
   // Levels
-  const lc = $('levels-card');
-  if (sig.direction !== 'neutral') {
-    lc.style.display = 'block';
-    $('levels-title').textContent = t('levels');
-    $('lbl-entry').textContent = t('entry');
-    $('lbl-tp1').textContent = t('tp1');
-    $('lbl-tp2').textContent = t('tp2');
-    $('lbl-sl').textContent = t('sl');
-    $('atr-note').textContent = t('atr');
-    $('level-entry').textContent = fmtPrice(sig.levels.entry);
-    $('level-tp1').textContent = fmtPrice(sig.levels.tp1);
-    $('level-tp2').textContent = fmtPrice(sig.levels.tp2);
-    $('level-sl').textContent = fmtPrice(sig.levels.sl);
-  } else {
-    lc.style.display = 'none';
+  var lvEl = el('levels');
+  if (lvEl) {
+    if (sig.direction !== 'neutral') {
+      lvEl.classList.remove('hidden');
+      setText('lv-ttl', t('levels'));
+      setText('lv-entry-nm', t('entry')); setText('lv-entry', fmtP(sig.levels.entry));
+      setText('lv-tp1-nm', t('tp1'));     setText('lv-tp1', fmtP(sig.levels.tp1));
+      setText('lv-tp2-nm', t('tp2'));     setText('lv-tp2', fmtP(sig.levels.tp2));
+      setText('lv-sl-nm', t('sl'));       setText('lv-sl', fmtP(sig.levels.sl));
+      setText('atr-note', t('atr'));
+    } else {
+      lvEl.classList.add('hidden');
+    }
   }
 
   // Indicators
-  $('ind-title').textContent = t('indicators');
-  const ind = sig.indicators;
-  const rows = [
-    { name: 'RSI (14)', val: ind.rsi.toFixed(1), bull: ind.rsi < 50, info: t('rsi_info') },
-    { name: 'EMA 9',    val: fmtPrice(ind.ema9),  bull: ind.price > ind.ema9, info: t('ema9_info') },
-    { name: 'EMA 21',   val: fmtPrice(ind.ema21), bull: ind.price > ind.ema21, info: t('ema21_info') },
-    { name: 'EMA 50',   val: fmtPrice(ind.ema50), bull: ind.price > ind.ema50, info: t('ema50_info') },
-    { name: 'MACD',     val: ind.macd.macdLine.toFixed(2), bull: ind.macd.macdLine > ind.macd.signalLine, info: t('macd_info') },
-    { name: lang==='ru'?'Объём':'Volume', val: `${ind.volRatio.toFixed(1)}x`, bull: ind.volRatio > 1, info: t('vol_info') },
+  setText('ind-ttl', t('indicators'));
+  var ind = sig.ind;
+  var rows = [
+    { name: 'RSI (14)', val: ind.rsi.toFixed(1), bull: ind.rsi < 50, info: t('rsi_i') },
+    { name: 'EMA 9',    val: fmtP(ind.ema9),     bull: ind.price > ind.ema9,  info: t('ema9_i') },
+    { name: 'EMA 21',   val: fmtP(ind.ema21),    bull: ind.price > ind.ema21, info: t('ema21_i') },
+    { name: 'EMA 50',   val: fmtP(ind.ema50),    bull: ind.price > ind.ema50, info: t('ema50_i') },
+    { name: 'MACD',     val: ind.macd.line.toFixed(2), bull: ind.macd.line > ind.macd.signal, info: t('macd_i') },
+    { name: lang === 'ru' ? 'Объём' : 'Volume', val: ind.volRatio.toFixed(1) + 'x', bull: ind.volRatio > 1, info: t('vol_i') }
   ];
-  $('ind-list').innerHTML = rows.map((r, i) => `
-    <div class="ind-row">
-      <div class="ind-main" onclick="toggleInfo(${i})">
-        <div class="ind-name-wrap">
-          <span class="ind-name">${r.name}</span>
-          <span class="ind-info-icon">ⓘ</span>
-        </div>
-        <span class="ind-val ${r.bull?'bull':'bear'}">${r.val}</span>
-      </div>
-      <div class="ind-desc" id="ind-desc-${i}">${r.info}</div>
-    </div>
-  `).join('');
+  var iHTML = '';
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    iHTML += '<div class="ind-row">'
+      + '<div class="ind-main" onclick="toggleInd(' + i + ')">'
+      + '<span><span class="ind-nm">' + r.name + '</span><span class="ind-ic">ⓘ</span></span>'
+      + '<span class="ind-vl ' + (r.bull ? 'b' : 'r') + '">' + r.val + '</span>'
+      + '</div>'
+      + '<div class="ind-info" id="ii' + i + '">' + r.info + '</div>'
+      + '</div>';
+  }
+  setHTML('ind-list', iHTML);
 }
 
-function toggleInfo(i) {
-  const el = $(`ind-desc-${i}`);
-  el.classList.toggle('open');
+function toggleInd(i) {
+  var e = el('ii' + i);
+  if (e) e.classList.toggle('open');
 }
 
 function renderHistory() {
-  const list = $('history-list');
+  var list = el('hist-list');
+  if (!list) return;
   if (!history.length) {
-    list.innerHTML = `<div class="history-empty">${t('hist_empty').replace('\n','<br>')}</div>`;
+    list.innerHTML = '<div class="hist-empty">' + t('no_hist').replace('\n', '<br>') + '</div>';
     return;
   }
-  list.innerHTML = history.slice(0, 50).map(e => `
-    <div class="history-row">
-      <div class="history-icon ${e.direction}">${e.direction==='long'?'↑':'↓'}</div>
-      <div class="history-meta">
-        <div class="history-top">
-          <span class="history-sym">${e.symbol}</span>
-          <span class="history-dir ${e.direction}">${e.direction==='long'?t('long_dir'):t('short_dir')}</span>
-        </div>
-        <div class="history-price">${fmtPrice(e.price)}</div>
-      </div>
-      <div class="history-right">
-        <div class="history-conf">${e.confidence}%</div>
-        <div class="history-time">${new Date(e.ts).toLocaleTimeString()}</div>
-      </div>
-    </div>
-  `).join('');
+  var html = '';
+  for (var i = 0; i < Math.min(history.length, 50); i++) {
+    var e = history[i];
+    var dirLabel = e.direction === 'long' ? t('long_dir') : t('short_dir');
+    html += '<div class="hist-row">'
+      + '<div class="hist-ic ' + e.direction + '">' + (e.direction === 'long' ? '↑' : '↓') + '</div>'
+      + '<div class="hist-meta">'
+      + '<div class="hist-top"><span class="hist-sym">' + e.sym + '</span>'
+      + '<span class="hist-dir ' + e.direction + '">' + dirLabel + '</span></div>'
+      + '<div class="hist-pr">' + fmtP(e.price) + '</div>'
+      + '</div>'
+      + '<div class="hist-rt">'
+      + '<div class="hist-conf">' + e.conf + '%</div>'
+      + '<div class="hist-time">' + new Date(e.ts).toLocaleTimeString() + '</div>'
+      + '</div></div>';
+  }
+  list.innerHTML = html;
 }
 
-// ── Load ──────────────────────────────────────────────────────────────────
-async function loadData() {
-  $('loading-text').textContent = t('loading');
-  $('loading-block').classList.remove('hidden');
-  $('content-block').classList.add('hidden');
-  $('refresh-btn').disabled = true;
+// ── Load ───────────────────────────────────────────────────────────────────
+function loadData() {
+  var loadEl = el('loading');
+  var contEl = el('content');
+  var rbtnEl = el('rbtn');
 
-  try {
-    const [candles, price, change, fg] = await Promise.all([fetchKlines(), fetchPrice(), fetch24h(), fetchFG()]);
-    const sig = generateSignal(candles);
+  setText('load-txt', t('loading'));
+  if (loadEl) loadEl.classList.remove('hidden');
+  if (contEl) contEl.classList.add('hidden');
+  if (rbtnEl) rbtnEl.disabled = true;
 
-    // Save to history if direction changed
-    if (lastDirection && lastDirection !== sig.direction && sig.direction !== 'neutral') {
-      history.unshift({ symbol, direction: sig.direction, confidence: sig.confidence, price, ts: Date.now() });
+  Promise.all([fetchKlines(), fetchPrice(), fetch24h(), fetchFG()]).then(function(res) {
+    var candles = res[0], price = res[1], change = res[2], fg = res[3];
+    var sig = genSignal(candles);
+
+    if (lastDir && lastDir !== sig.direction && sig.direction !== 'neutral') {
+      history.unshift({ sym: sym, direction: sig.direction, conf: sig.confidence, price: price, ts: Date.now() });
       if (history.length > 50) history = history.slice(0, 50);
-      localStorage.setItem('signal_history', JSON.stringify(history));
+      try { localStorage.setItem('csh', JSON.stringify(history)); } catch(e) {}
       renderHistory();
     }
-    lastDirection = sig.direction;
+    lastDir = sig.direction;
 
     renderFG(fg);
     renderPrice(price, change);
     renderSignal(sig);
 
-    $('loading-block').classList.add('hidden');
-    $('content-block').classList.remove('hidden');
-  } catch(e) {
-    $('loading-block').innerHTML = `<div style="color:#ff4d6d;text-align:center;padding:40px">Ошибка загрузки.<br><small>${e.message}</small></div>`;
-  }
-
-  $('refresh-btn').disabled = false;
-  $('refresh-label').textContent = t('refresh');
-
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(loadData, 30000);
+    if (loadEl) loadEl.classList.add('hidden');
+    if (contEl) contEl.classList.remove('hidden');
+  }).catch(function(err) {
+    if (loadEl) loadEl.innerHTML = '<div style="color:#ff4d6d;text-align:center;padding:40px">Ошибка загрузки.<br><small>' + err.message + '</small></div>';
+  }).then(function() {
+    if (rbtnEl) { rbtnEl.disabled = false; setText('rbtn-txt', t('refresh')); }
+    clearTimeout(timer);
+    timer = setTimeout(loadData, 30000);
+  });
 }
 
-// ── UI Events ─────────────────────────────────────────────────────────────
+// ── UI ──────────────────────────────────────────────────────────────────────
 function setLang(l) {
   lang = l;
-  $('btn-ru').className = l==='ru' ? 'active' : '';
-  $('btn-en').className = l==='en' ? 'active' : '';
-  document.querySelectorAll('[data-ru]').forEach(el => {
-    el.textContent = l==='ru' ? el.dataset.ru : el.dataset.en;
-  });
+  var ru = el('btn-ru'), en = el('btn-en');
+  if (ru) ru.className = l === 'ru' ? 'on' : '';
+  if (en) en.className = l === 'en' ? 'on' : '';
+  var ts = el('tab-sig'), th = el('tab-his');
+  if (ts) ts.textContent = l === 'ru' ? '📈 Сигнал' : '📈 Signal';
+  if (th) th.textContent = l === 'ru' ? '🕐 История' : '🕐 History';
   loadData();
 }
 
 function setTab(tab) {
-  $('view-signal').classList.toggle('hidden', tab !== 'signal');
-  $('view-history').classList.toggle('hidden', tab !== 'history');
-  $('tab-signal').className = 'tab-btn' + (tab==='signal'?' active':'');
-  $('tab-history').className = 'tab-btn' + (tab==='history'?' active':'');
+  var vs = el('v-signal'), vh = el('v-history');
+  var ts = el('tab-sig'), th = el('tab-his');
+  if (vs) vs.classList.toggle('hidden', tab !== 'signal');
+  if (vh) vh.classList.toggle('hidden', tab !== 'history');
+  if (ts) ts.className = 'tab' + (tab === 'signal' ? ' on' : '');
+  if (th) th.className = 'tab' + (tab === 'history' ? ' on' : '');
   if (tab === 'history') renderHistory();
 }
 
-function setInterval(iv) {
-  interval = iv;
-  ['15m','1h','4h','1d'].forEach(i => {
-    $(`iv-${i}`).className = 'interval-btn' + (i===iv?' active':'');
-  });
+function setIv(v) {
+  iv = v;
+  var ivs = ['15m', '1h', '4h', '1d'];
+  for (var i = 0; i < ivs.length; i++) {
+    var b = el('iv-' + ivs[i]);
+    if (b) b.className = 'ivbtn' + (ivs[i] === v ? ' on' : '');
+  }
   loadData();
 }
 
-function onSymbolChange() {
-  symbol = $('symbol-select').value;
-  lastDirection = null;
+function onSym() {
+  var s = el('sym-sel');
+  if (s) sym = s.value;
+  lastDir = null;
   loadData();
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   renderHistory();
   loadData();
 });
