@@ -191,6 +191,7 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
         <div class="sig-sub" id="sig-sub">—</div>
         <div class="sig-exp" id="sig-exp"></div>
         <div class="sig-disc" id="sig-disc">Не является финансовым советом. Торгуй на свой риск.</div>
+        <div id="trade-btns"></div>
       </div>
 
       <!-- CONFIDENCE -->
@@ -564,6 +565,20 @@ function renderSignal(sig) {
   setText('sig-exp', sig.explanation);
   setText('sig-disc', t('disc'));
 
+  // Trade buttons
+  var tbEl = el('trade-btns');
+  if (tbEl) {
+    var hasOpen = trades.some(function(tr) { return tr.status === 'pending' && tr.sym === sym; });
+    if (hasOpen) {
+      tbEl.innerHTML = '<button onclick="closeTrade()" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--txt);font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;margin-top:12px">'+(lang==='ru'?'⏹ Закрыть сделку':'⏹ Close trade')+'</button>';
+    } else {
+      tbEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'
+        + '<button onclick="openTrade('long')" style="background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3);color:#00e676;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer">↑ '+(lang==='ru'?'Лонг':'Long')+'</button>'
+        + '<button onclick="openTrade('short')" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:#ff4d6d;font-family:var(--fn);font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer">↓ '+(lang==='ru'?'Шорт':'Short')+'</button>'
+        + '</div>';
+    }
+  }
+
   // Confidence
   (function(){
     var tipTxt = lang==='ru' ? 'Насколько индикаторы согласны между собой. 100% = все говорят одно. 30% = слабый сигнал.' : 'How strongly indicators agree. 100% = all aligned. 30% = weak signal, wait.';
@@ -709,11 +724,12 @@ function loadData() {
       if (sigHistory.length > 50) sigHistory = sigHistory.slice(0, 50);
       try { localStorage.setItem('csh', JSON.stringify(sigHistory)); } catch(e) {}
       renderHistory();
-      addTrade(sym, sig.direction, price, sig.confidence);
     }
     checkPendingTrades(price, sym);
     lastDir = sig.direction;
 
+    currentPrice = price;
+    lastSig = sig;
     renderPrice(price, change);
     renderSignal(sig);
 
@@ -775,6 +791,8 @@ function onSym() {
 // ── Paper Trading Stats ───────────────────────────────────────────────────
 var INITIAL_BALANCE = 1000;
 var trades = [];
+var lastSig = null;
+var currentPrice = 0;
 try { trades = JSON.parse(localStorage.getItem('pt_trades') || '[]'); } catch(e) { trades = []; }
 
 function saveTrades() {
@@ -868,6 +886,27 @@ function renderStats() {
       + '</div></div>';
   }
   list.innerHTML = html;
+}
+
+function openTrade(direction) {
+  if (!currentPrice || currentPrice === 0) { alert(lang==='ru'?'Цена ещё не загружена':'Price not loaded yet'); return; }
+  var hasOpen = trades.some(function(tr) { return tr.status === 'pending' && tr.sym === sym; });
+  if (hasOpen) { alert(lang==='ru'?'У тебя уже есть открытая сделка по '+sym:'You already have an open trade on '+sym); return; }
+  addTrade(sym, direction, currentPrice, 0);
+  renderStats();
+  renderSignal(lastSig);
+}
+
+function closeTrade() {
+  if (!currentPrice || currentPrice === 0) return;
+  for (var i = 0; i < trades.length; i++) {
+    if (trades[i].status === 'pending' && trades[i].sym === sym) {
+      resolveTrade(trades[i], currentPrice);
+      break;
+    }
+  }
+  renderStats();
+  if (lastSig) renderSignal(lastSig);
 }
 
 function resetStats() {
