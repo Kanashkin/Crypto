@@ -687,8 +687,8 @@ function renderFG(fg) {
   $('fg-ring-num').style.color = color;
   const circumference = 138.2;
   const offset = circumference - (fg.value / 100) * circumference;
-  $('fg-arc').style.strokeDashoffset = offset;
-  $('fg-arc').style.stroke = color;
+  const arc = $('fg-arc');
+  if (arc) { arc.style.strokeDashoffset = offset; arc.style.stroke = color; }
 }
 
 function renderPrice(price, change) {
@@ -716,8 +716,10 @@ function renderSignal(sig) {
   $('conf-value').textContent = `${sig.confidence}%`;
   const barColor = sig.direction === 'long' ? '#00e676' : sig.direction === 'short' ? '#ff4d6d' : '#ffd740';
   const bar = $('conf-bar');
-  bar.style.background = barColor;
-  setTimeout(() => { bar.style.width = sig.confidence + '%'; }, 50);
+  if (bar) {
+    bar.style.background = barColor;
+    setTimeout(() => { bar.style.width = sig.confidence + '%'; }, 50);
+  }
 
   // Reasons
   $('reasons-title').textContent = t('reasons');
@@ -872,8 +874,10 @@ function onSymbolChange() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-renderHistory();
-loadData();
+document.addEventListener('DOMContentLoaded', () => {
+  renderHistory();
+  loadData();
+});
 </script>
 </body>
 </html>
