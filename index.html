@@ -87,6 +87,22 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
 .disclaimer-lang{display:flex;gap:8px;justify-content:center}
 .disclaimer-lang button{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer}
 .disclaimer-lang button.on{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)}
+.trade-row{display:flex;align-items:center;gap:12px;padding:14px;background:var(--sur);border:1px solid var(--bor);border-radius:14px;margin-bottom:10px}
+.trade-ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.trade-ic.long{background:rgba(0,230,118,.15);color:var(--grn)}
+.trade-ic.short{background:rgba(255,77,109,.15);color:var(--red)}
+.trade-ic.pending{background:rgba(255,255,255,.08);color:var(--mut)}
+.trade-meta{flex:1;min-width:0}
+.trade-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.trade-sym{font-size:13px;font-weight:700}
+.trade-dir{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
+.trade-dir.long{background:rgba(0,230,118,.15);color:var(--grn)}
+.trade-dir.short{background:rgba(255,77,109,.15);color:var(--red)}
+.trade-prices{font-size:11px;color:var(--mut);font-family:var(--mo)}
+.trade-rt{text-align:right;flex-shrink:0}
+.trade-pnl{font-size:14px;font-weight:700;font-family:var(--mo)}
+.trade-pnl.win{color:var(--grn)}.trade-pnl.loss{color:var(--red)}.trade-pnl.pend{color:var(--mut)}
+.trade-status{font-size:10px;color:var(--mut);margin-top:2px}
 .tip-wrap{position:relative;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
 .tip-icon{font-size:12px;color:rgba(255,255,255,.25);line-height:1}
 .tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1e2530;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;font-size:12px;color:rgba(255,255,255,.75);line-height:1.5;width:220px;z-index:99;display:none;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.4)}
@@ -121,6 +137,7 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
   <div class="tabs">
     <button class="tab on" id="tab-sig" onclick="setTab('signal')">📈 Сигнал</button>
     <button class="tab" id="tab-his" onclick="setTab('history')">🕐 История</button>
+    <button class="tab" id="tab-stats" onclick="setTab('stats')">📊 Статистика</button>
   </div>
 
   <!-- SIGNAL VIEW -->
@@ -215,6 +232,36 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
         <span id="rbtn-txt">Обновить</span>
       </button>
     </div>
+  </div>
+
+  <!-- STATS VIEW -->
+  <div id="v-stats" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="sec-ttl" style="margin:0" id="stats-ttl">Результаты сигналов</div>
+        <button onclick="resetStats()" style="background:none;border:1px solid rgba(255,77,109,.3);color:#ff4d6d;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer" id="stats-reset">Сбросить</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--mut);margin-bottom:4px" id="sl-bal">Баланс</div>
+          <div style="font-family:var(--mo);font-size:20px;font-weight:700" id="sv-bal">$1,000</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--mut);margin-bottom:4px" id="sl-pnl">Прибыль/убыток</div>
+          <div style="font-family:var(--mo);font-size:20px;font-weight:700" id="sv-pnl">$0</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--mut);margin-bottom:4px" id="sl-wr">Точность</div>
+          <div style="font-family:var(--mo);font-size:20px;font-weight:700" id="sv-wr">—</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--mut);margin-bottom:4px" id="sl-cnt">Сделок</div>
+          <div style="font-family:var(--mo);font-size:20px;font-weight:700" id="sv-cnt">0</div>
+        </div>
+      </div>
+      <div id="stats-note" style="font-size:11px;color:rgba(255,255,255,.3);text-align:center">Каждый сигнал LONG/SHORT автоматически отслеживается. Результат считается через 4 свечи.</div>
+    </div>
+    <div id="trades-list"></div>
   </div>
 
   <!-- HISTORY VIEW -->
@@ -662,7 +709,9 @@ function loadData() {
       if (sigHistory.length > 50) sigHistory = sigHistory.slice(0, 50);
       try { localStorage.setItem('csh', JSON.stringify(sigHistory)); } catch(e) {}
       renderHistory();
+      addTrade(sym, sig.direction, price, sig.confidence);
     }
+    checkPendingTrades(price, sym);
     lastDir = sig.direction;
 
     renderPrice(price, change);
@@ -694,13 +743,16 @@ function setLang(l) {
 }
 
 function setTab(tab) {
-  var vs = el('v-signal'), vh = el('v-history');
-  var ts = el('tab-sig'), th = el('tab-his');
+  var vs = el('v-signal'), vh = el('v-history'), vst = el('v-stats');
+  var ts = el('tab-sig'), th = el('tab-his'), tst = el('tab-stats');
   if (vs) vs.classList.toggle('hidden', tab !== 'signal');
   if (vh) vh.classList.toggle('hidden', tab !== 'history');
+  if (vst) vst.classList.toggle('hidden', tab !== 'stats');
   if (ts) ts.className = 'tab' + (tab === 'signal' ? ' on' : '');
   if (th) th.className = 'tab' + (tab === 'history' ? ' on' : '');
+  if (tst) tst.className = 'tab' + (tab === 'stats' ? ' on' : '');
   if (tab === 'history') renderHistory();
+  if (tab === 'stats') renderStats();
 }
 
 function setIv(v) {
@@ -718,6 +770,111 @@ function onSym() {
   if (s) sym = s.value;
   lastDir = null;
   loadData();
+}
+
+// ── Paper Trading Stats ───────────────────────────────────────────────────
+var INITIAL_BALANCE = 1000;
+var trades = [];
+try { trades = JSON.parse(localStorage.getItem('pt_trades') || '[]'); } catch(e) { trades = []; }
+
+function saveTrades() {
+  try { localStorage.setItem('pt_trades', JSON.stringify(trades)); } catch(e) {}
+}
+
+function addTrade(sym, direction, entryPrice, conf) {
+  trades.unshift({ id: Date.now(), sym: sym, direction: direction, entry: entryPrice, conf: conf, exit: null, pnl: null, ts: Date.now(), status: 'pending' });
+  if (trades.length > 100) trades = trades.slice(0, 100);
+  saveTrades();
+}
+
+function resolveTrade(trade, currentPrice) {
+  var pct = trade.direction === 'long'
+    ? (currentPrice - trade.entry) / trade.entry * 100
+    : (trade.entry - currentPrice) / trade.entry * 100;
+  trade.exit = currentPrice;
+  trade.pnl = pct;
+  trade.status = pct >= 0 ? 'win' : 'loss';
+  saveTrades();
+}
+
+function checkPendingTrades(currentPrice, sym) {
+  var updated = false;
+  for (var i = 0; i < trades.length; i++) {
+    var tr = trades[i];
+    if (tr.status === 'pending' && tr.sym === sym) {
+      var age = Date.now() - tr.ts;
+      if (age > 4 * 60 * 60 * 1000) {
+        resolveTrade(tr, currentPrice);
+        updated = true;
+      }
+    }
+  }
+  if (updated) renderStats();
+}
+
+function calcStats() {
+  var balance = INITIAL_BALANCE;
+  var wins = 0, total = 0;
+  for (var i = trades.length - 1; i >= 0; i--) {
+    var tr = trades[i];
+    if (tr.status !== 'pending') {
+      var bet = balance * 0.1;
+      balance += bet * tr.pnl / 100;
+      total++;
+      if (tr.pnl >= 0) wins++;
+    }
+  }
+  return { balance: balance, pnl: balance - INITIAL_BALANCE, winrate: total > 0 ? Math.round(wins/total*100) : null, total: total };
+}
+
+function renderStats() {
+  var stats = calcStats();
+  var pnlEl = document.getElementById('sv-pnl');
+  var balEl = document.getElementById('sv-bal');
+  if (balEl) balEl.textContent = '$' + stats.balance.toFixed(0);
+  if (pnlEl) {
+    pnlEl.textContent = (stats.pnl >= 0 ? '+' : '') + '$' + stats.pnl.toFixed(0);
+    pnlEl.style.color = stats.pnl >= 0 ? '#00e676' : '#ff4d6d';
+  }
+  var wrEl = document.getElementById('sv-wr');
+  if (wrEl) wrEl.textContent = stats.winrate !== null ? stats.winrate + '%' : '—';
+  var cntEl = document.getElementById('sv-cnt');
+  if (cntEl) cntEl.textContent = stats.total;
+
+  var list = document.getElementById('trades-list');
+  if (!list) return;
+  if (!trades.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mut);font-size:13px">Сделок пока нет.<br>Они появятся автоматически при смене сигнала.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < Math.min(trades.length, 30); i++) {
+    var tr = trades[i];
+    var isPend = tr.status === 'pending';
+    var isWin = tr.pnl >= 0;
+    var pnlTxt = isPend ? '...' : (isWin ? '+' : '') + tr.pnl.toFixed(2) + '%';
+    var pnlCls = isPend ? 'pend' : isWin ? 'win' : 'loss';
+    var statusTxt = isPend ? (lang==='ru'?'Ждём 4 свечи...':'Waiting 4 candles...') : isWin ? (lang==='ru'?'Прибыль':'Win') : (lang==='ru'?'Убыток':'Loss');
+    html += '<div class="trade-row">'
+      + '<div class="trade-ic ' + (isPend ? 'pending' : tr.direction) + '">' + (tr.direction==='long'?'↑':'↓') + '</div>'
+      + '<div class="trade-meta">'
+      + '<div class="trade-top"><span class="trade-sym">' + tr.sym + '</span>'
+      + '<span class="trade-dir ' + tr.direction + '">' + (tr.direction==='long'?'LONG':'SHORT') + '</span></div>'
+      + '<div class="trade-prices">Вход: ' + fmtP(tr.entry) + (tr.exit ? ' → ' + fmtP(tr.exit) : '') + '</div>'
+      + '</div>'
+      + '<div class="trade-rt">'
+      + '<div class="trade-pnl ' + pnlCls + '">' + pnlTxt + '</div>'
+      + '<div class="trade-status">' + statusTxt + '</div>'
+      + '</div></div>';
+  }
+  list.innerHTML = html;
+}
+
+function resetStats() {
+  if (!confirm(lang==='ru'?'Сбросить всю историю сделок?':'Reset all trade history?')) return;
+  trades = [];
+  saveTrades();
+  renderStats();
 }
 
 var discTexts = {
@@ -767,6 +924,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (o) o.style.display = 'none';
   }
   renderHistory();
+  renderStats();
   loadData();
 });
 </script>
