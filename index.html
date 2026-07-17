@@ -211,11 +211,11 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
 var lang = 'ru';
 var sym = 'BTC';
 var iv = '1h';
-var history = [];
+var sigHistory = [];
 var lastDir = null;
 var timer = null;
 
-try { history = JSON.parse(localStorage.getItem('csh') || '[]'); } catch(e) { history = []; }
+try { sigHistory = JSON.parse(localStorage.getItem('csh') || '[]'); } catch(e) { sigHistory = []; }
 
 var T = {
   loading:    {ru:'Загружаем данные...',  en:'Loading data...'},
@@ -568,13 +568,13 @@ function toggleInd(i) {
 function renderHistory() {
   var list = el('hist-list');
   if (!list) return;
-  if (!history.length) {
+  if (!sigHistory.length) {
     list.innerHTML = '<div class="hist-empty">' + t('no_hist').replace('\n', '<br>') + '</div>';
     return;
   }
   var html = '';
-  for (var i = 0; i < Math.min(history.length, 50); i++) {
-    var e = history[i];
+  for (var i = 0; i < Math.min(sigHistory.length, 50); i++) {
+    var e = sigHistory[i];
     var dirLabel = e.direction === 'long' ? t('long_dir') : t('short_dir');
     html += '<div class="hist-row">'
       + '<div class="hist-ic ' + e.direction + '">' + (e.direction === 'long' ? '↑' : '↓') + '</div>'
@@ -607,9 +607,9 @@ function loadData() {
     var sig = genSignal(candles);
 
     if (lastDir && lastDir !== sig.direction && sig.direction !== 'neutral') {
-      history.unshift({ sym: sym, direction: sig.direction, conf: sig.confidence, price: price, ts: Date.now() });
-      if (history.length > 50) history = history.slice(0, 50);
-      try { localStorage.setItem('csh', JSON.stringify(history)); } catch(e) {}
+      sigHistory.unshift({ sym: sym, direction: sig.direction, conf: sig.confidence, price: price, ts: Date.now() });
+      if (sigHistory.length > 50) sigHistory = sigHistory.slice(0, 50);
+      try { localStorage.setItem('csh', JSON.stringify(sigHistory)); } catch(e) {}
       renderHistory();
     }
     lastDir = sig.direction;
