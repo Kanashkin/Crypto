@@ -76,6 +76,22 @@ select.sym{background:var(--sur);border:1px solid var(--bor);color:var(--txt);fo
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 0;color:var(--mut);font-size:14px}
 .hidden{display:none!important}
+.disclaimer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.disclaimer-box{background:#0f1318;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px 24px;max-width:400px;width:100%;text-align:center}
+.disclaimer-logo{font-size:20px;font-weight:700;margin-bottom:24px;color:#e8edf5}.disclaimer-logo span{color:#00e676}
+.disclaimer-icon{font-size:40px;margin-bottom:16px}
+.disclaimer-title{font-size:18px;font-weight:700;color:#e8edf5;margin-bottom:12px}
+.disclaimer-text{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:24px}
+.disclaimer-text b{color:rgba(255,255,255,.8)}
+.disclaimer-btn{width:100%;background:#fff;color:#000;border:none;font-size:15px;font-weight:700;padding:16px;border-radius:14px;cursor:pointer;margin-bottom:10px}
+.disclaimer-lang{display:flex;gap:8px;justify-content:center}
+.disclaimer-lang button{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer}
+.disclaimer-lang button.on{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)}
+.tip-wrap{position:relative;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.tip-icon{font-size:12px;color:rgba(255,255,255,.25);line-height:1}
+.tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1e2530;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;font-size:12px;color:rgba(255,255,255,.75);line-height:1.5;width:220px;z-index:99;display:none;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1e2530}
+.tip-wrap:hover .tooltip,.tip-wrap.open .tooltip{display:block}
 .hist-empty{text-align:center;padding:60px 0;color:var(--mut);font-size:14px;line-height:1.8}
 .hist-row{display:flex;align-items:center;gap:14px;padding:14px;background:var(--sur);border:1px solid var(--bor);border-radius:14px;margin-bottom:10px}
 .hist-ic{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
@@ -361,37 +377,38 @@ function genSignal(candles) {
 
   // RSI
   maxScore += 3;
-  if (rsi < 30)      { score += 3; reasons.push({ text: '[RSI] ' + t('rsi_os') + ' (' + rsi.toFixed(1) + ')', bull: true }); }
-  else if (rsi > 70) { score -= 3; reasons.push({ text: '[RSI] ' + t('rsi_ob') + ' (' + rsi.toFixed(1) + ')', bull: false }); }
-  else if (rsi < 50) { score -= 1; reasons.push({ text: '[RSI] ' + t('rsi_nbr') + ' (' + rsi.toFixed(1) + ')', bull: false }); }
-  else               { score += 1; reasons.push({ text: '[RSI] ' + t('rsi_nb') + ' (' + rsi.toFixed(1) + ')', bull: true }); }
+  var rsiR = Math.round(rsi);
+  if (rsi < 30)      { score += 3; reasons.push({ text: lang==='ru' ? 'RSI '+rsiR+' — рынок сильно перепродан, хороший момент для покупки' : 'RSI '+rsiR+' — heavily oversold, good buying opportunity', bull: true }); }
+  else if (rsi > 70) { score -= 3; reasons.push({ text: lang==='ru' ? 'RSI '+rsiR+' — рынок перегрет, высокий риск отката' : 'RSI '+rsiR+' — overbought, high risk of pullback', bull: false }); }
+  else if (rsi < 50) { score -= 1; reasons.push({ text: lang==='ru' ? 'RSI '+rsiR+' — слабость покупателей, давление продавцов' : 'RSI '+rsiR+' — buyers weak, sellers in control', bull: false }); }
+  else               { score += 1; reasons.push({ text: lang==='ru' ? 'RSI '+rsiR+' — покупатели немного сильнее, умеренно бычий' : 'RSI '+rsiR+' — buyers slightly stronger, mildly bullish', bull: true }); }
 
   // EMA
   maxScore += 3;
-  if (ema9 > ema21 && ema21 > ema50 && price > ema9)      { score += 3; reasons.push({ text: '[EMA] ' + t('ema_up'), bull: true }); }
-  else if (ema9 < ema21 && ema21 < ema50 && price < ema9) { score -= 3; reasons.push({ text: '[EMA] ' + t('ema_dn'), bull: false }); }
-  else if (price > ema50) { score += 1; reasons.push({ text: '[EMA] ' + t('ema_a50'), bull: true }); }
-  else                    { score -= 1; reasons.push({ text: '[EMA] ' + t('ema_b50'), bull: false }); }
+  if (ema9 > ema21 && ema21 > ema50 && price > ema9)      { score += 3; reasons.push({ text: lang==='ru' ? 'Все скользящие выстроены вверх — сильный восходящий тренд' : 'All moving averages aligned up — strong uptrend', bull: true }); }
+  else if (ema9 < ema21 && ema21 < ema50 && price < ema9) { score -= 3; reasons.push({ text: lang==='ru' ? 'Все скользящие выстроены вниз — сильный нисходящий тренд' : 'All moving averages aligned down — strong downtrend', bull: false }); }
+  else if (price > ema50) { score += 1; reasons.push({ text: lang==='ru' ? 'Цена выше долгосрочного тренда — общий фон бычий' : 'Price above long-term trend — overall bullish', bull: true }); }
+  else                    { score -= 1; reasons.push({ text: lang==='ru' ? 'Цена ниже долгосрочного тренда — общий фон медвежий' : 'Price below long-term trend — overall bearish', bull: false }); }
 
   // MACD
   maxScore += 3;
   if (macd.line > macd.signal) {
     var pts = macd.line > 0 ? 3 : 2; score += pts;
-    reasons.push({ text: '[MACD] ' + t('macd_bull'), bull: true });
+    reasons.push({ text: lang==='ru' ? 'MACD разворачивается вверх — импульс покупок растёт' : 'MACD turning up — buying momentum increasing', bull: true });
   } else if (macd.line < macd.signal) {
     var pts = macd.line < 0 ? 3 : 2; score -= pts;
-    reasons.push({ text: '[MACD] ' + t('macd_bear'), bull: false });
+    reasons.push({ text: lang==='ru' ? 'MACD разворачивается вниз — импульс продаж растёт' : 'MACD turning down — selling momentum increasing', bull: false });
   } else {
-    reasons.push({ text: '[MACD] ' + t('macd_neut'), bull: score >= 0 });
+    reasons.push({ text: lang==='ru' ? 'MACD нейтральный — нет чёткого импульса' : 'MACD neutral — no clear momentum', bull: score >= 0 });
   }
 
   // Volume
   maxScore += 1;
   if (volRatio > 1.5) {
-    if (score > 0)      { score += 1; reasons.push({ text: '[' + (lang==='ru'?'Объём':'Volume') + '] ' + t('vol_up'), bull: true }); }
-    else if (score < 0) { score -= 1; reasons.push({ text: '[' + (lang==='ru'?'Объём':'Volume') + '] ' + t('vol_dn'), bull: false }); }
+    if (score > 0)      { score += 1; reasons.push({ text: lang==='ru' ? 'Объём выше нормы — рост подтверждён активными покупками' : 'Volume above average — rally confirmed by strong buying', bull: true }); }
+    else if (score < 0) { score -= 1; reasons.push({ text: lang==='ru' ? 'Объём выше нормы — падение подтверждено активными продажами' : 'Volume above average — drop confirmed by strong selling', bull: false }); }
   } else {
-    reasons.push({ text: '[' + (lang==='ru'?'Объём':'Volume') + '] ' + t('vol_norm') + ' (' + volRatio.toFixed(1) + 'x)', bull: score >= 0 });
+    reasons.push({ text: lang==='ru' ? 'Объём в норме ('+volRatio.toFixed(1)+'x) — рынок спокойный, без ажиотажа' : 'Normal volume ('+volRatio.toFixed(1)+'x) — quiet market, no rush', bull: score >= 0 });
   }
 
   var confidence = Math.min(100, Math.round(Math.abs(score) / maxScore * 100));
@@ -501,7 +518,12 @@ function renderSignal(sig) {
   setText('sig-disc', t('disc'));
 
   // Confidence
-  setText('conf-lbl', t('confidence'));
+  (function(){
+    var tipTxt = lang==='ru' ? 'Насколько индикаторы согласны между собой. 100% = все говорят одно. 30% = слабый сигнал.' : 'How strongly indicators agree. 100% = all aligned. 30% = weak signal, wait.';
+    var lbl = lang==='ru' ? 'Уверенность' : 'Confidence';
+    var e = el('conf-lbl');
+    if (e) e.innerHTML = '<span class="tip-wrap" onclick="toggleTip(\'conf-lbl\')">' + lbl + '<span class="tip-icon">?</span><div class="tooltip">' + tipTxt + '</div></span>';
+    })();
   setText('conf-pct', sig.confidence + '%');
   var barColor = sig.direction === 'long' ? '#00e676' : sig.direction === 'short' ? '#ff4d6d' : '#ffd740';
   var fill = el('conf-fill');
@@ -511,7 +533,12 @@ function renderSignal(sig) {
   }
 
   // Reasons
-  setText('reasons-ttl', t('reasons'));
+  (function(){
+    var tipTxt = lang==='ru' ? 'Почему алгоритм выдал именно этот сигнал — какие индикаторы сыграли роль.' : 'Why the algorithm gave this signal — which indicators contributed.';
+    var lbl = lang==='ru' ? 'Причины сигнала' : 'Signal reasons';
+    var e = el('reasons-ttl');
+    if (e) e.innerHTML = '<span class="tip-wrap" onclick="toggleTip(\'reasons-ttl\')">' + lbl + '<span class="tip-icon">?</span><div class="tooltip">' + tipTxt + '</div></span>';
+    })();
   var rHTML = '';
   for (var i = 0; i < sig.reasons.length; i++) {
     var r = sig.reasons[i];
@@ -524,7 +551,12 @@ function renderSignal(sig) {
   if (lvEl) {
     if (sig.direction !== 'neutral') {
       lvEl.classList.remove('hidden');
-      setText('lv-ttl', t('levels'));
+      (function(){
+    var tipTxt = lang==='ru' ? 'Точки входа и выхода рассчитаны на основе ATR — среднего диапазона за 14 свечей.' : 'Entry/exit levels based on ATR — average range over last 14 candles.';
+    var lbl = lang==='ru' ? 'Уровни сделки' : 'Trade levels';
+    var e = el('lv-ttl');
+    if (e) e.innerHTML = '<span class="tip-wrap" onclick="toggleTip(\'lv-ttl\')">' + lbl + '<span class="tip-icon">?</span><div class="tooltip">' + tipTxt + '</div></span>';
+    })();
       setText('lv-entry-nm', t('entry')); setText('lv-entry', fmtP(sig.levels.entry));
       setText('lv-tp1-nm', t('tp1'));     setText('lv-tp1', fmtP(sig.levels.tp1));
       setText('lv-tp2-nm', t('tp2'));     setText('lv-tp2', fmtP(sig.levels.tp2));
@@ -536,7 +568,12 @@ function renderSignal(sig) {
   }
 
   // Indicators
-  setText('ind-ttl', t('indicators'));
+  (function(){
+    var tipTxt = lang==='ru' ? 'Технические индикаторы на которых основан сигнал. Тапни ⓘ чтобы узнать про каждый.' : 'Technical indicators the signal is based on. Tap ⓘ to learn about each.';
+    var lbl = lang==='ru' ? 'Индикаторы' : 'Indicators';
+    var e = el('ind-ttl');
+    if (e) e.innerHTML = '<span class="tip-wrap" onclick="toggleTip(\'ind-ttl\')">' + lbl + '<span class="tip-icon">?</span><div class="tooltip">' + tipTxt + '</div></span>';
+    })();
   var ind = sig.ind;
   var rows = [
     { name: 'RSI (14)', val: ind.rsi.toFixed(1), bull: ind.rsi < 50, info: t('rsi_i') },
@@ -558,6 +595,20 @@ function renderSignal(sig) {
       + '</div>';
   }
   setHTML('ind-list', iHTML);
+}
+
+function toggleTip(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var wrap = el.closest('.tip-wrap');
+  if (!wrap) return;
+  wrap.classList.toggle('open');
+  document.addEventListener('click', function handler(e) {
+    if (!wrap.contains(e.target)) {
+      wrap.classList.remove('open');
+      document.removeEventListener('click', handler);
+    }
+  });
 }
 
 function toggleInd(i) {
@@ -669,10 +720,74 @@ function onSym() {
   loadData();
 }
 
+var discTexts = {
+  ru: {
+    title: 'Важное предупреждение',
+    text: 'Это приложение предоставляет <b>технический анализ</b> исключительно в информационных целях.<br><br><b>Не является финансовым советом</b> или инвестиционной рекомендацией.<br><br>Торговля криптовалютой сопряжена с <b>высоким риском потери средств</b>. Вы можете потерять весь капитал.<br><br>Торгуйте на свой страх и риск.',
+    btn: 'Я понимаю и принимаю риски'
+  },
+  en: {
+    title: 'Important disclaimer',
+    text: 'This app provides <b>technical analysis</b> for informational purposes only.<br><br><b>Not financial advice</b> or investment recommendation.<br><br>Crypto trading involves <b>high risk of loss</b>. You may lose all your capital.<br><br>Trade at your own risk.',
+    btn: 'I understand and accept the risks'
+  }
+};
+var discLangVal = 'ru';
+
+function discLang(l) {
+  discLangVal = l;
+  var d = discTexts[l];
+  var t = document.getElementById('disc-title');
+  var tx = document.getElementById('disc-text');
+  var b = document.getElementById('disc-btn');
+  var ru = document.getElementById('disc-ru');
+  var en = document.getElementById('disc-en');
+  if (t) t.textContent = d.title;
+  if (tx) tx.innerHTML = d.text;
+  if (b) b.textContent = d.btn;
+  if (ru) ru.className = l === 'ru' ? 'on' : '';
+  if (en) en.className = l === 'en' ? 'on' : '';
+}
+
+function acceptDisclaimer() {
+  try { localStorage.setItem('disc_accepted', '1'); } catch(e) {}
+  var o = document.getElementById('disclaimer-overlay');
+  if (o) o.style.display = 'none';
+  lang = discLangVal;
+  var ru = el('btn-ru'), en = el('btn-en');
+  if (ru) ru.className = discLangVal === 'ru' ? 'on' : '';
+  if (en) en.className = discLangVal === 'en' ? 'on' : '';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  var accepted = false;
+  try { accepted = localStorage.getItem('disc_accepted') === '1'; } catch(e) {}
+  if (accepted) {
+    var o = document.getElementById('disclaimer-overlay');
+    if (o) o.style.display = 'none';
+  }
   renderHistory();
   loadData();
 });
 </script>
+<div id="disclaimer-overlay" class="disclaimer-overlay">
+  <div class="disclaimer-box">
+    <div class="disclaimer-logo">Crypto<span>Signal</span></div>
+    <div class="disclaimer-icon">⚠️</div>
+    <div class="disclaimer-title" id="disc-title">Важное предупреждение</div>
+    <div class="disclaimer-text" id="disc-text">
+      Это приложение предоставляет <b>технический анализ</b> исключительно в информационных целях.<br><br>
+      <b>Не является финансовым советом</b> или инвестиционной рекомендацией.<br><br>
+      Торговля криптовалютой сопряжена с <b>высоким риском потери средств</b>. Вы можете потерять весь капитал.<br><br>
+      Торгуйте на свой страх и риск.
+    </div>
+    <div class="disclaimer-lang">
+      <button class="on" id="disc-ru" onclick="discLang('ru')">RU</button>
+      <button id="disc-en" onclick="discLang('en')">EN</button>
+    </div>
+    <br>
+    <button class="disclaimer-btn" id="disc-btn" onclick="acceptDisclaimer()">Я понимаю и принимаю риски</button>
+  </div>
+</div>
 </body>
 </html>
